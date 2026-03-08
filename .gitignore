@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+*.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin
+.kotlin/
+
+# Compiled output
+*.class
+out/
+
+# Build failures log
+.kotlin-errors.log
