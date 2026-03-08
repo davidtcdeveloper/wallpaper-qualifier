@@ -11,18 +11,18 @@ This document serves as the entry point for understanding the project, its archi
 ## Rule Index
 
 **Always load this file first to understand which other files you need to load:**
-- @ai-rules/rule-loading.md
+- @docs/ai-rules/rule-loading.md
 
 **Core project rules:**
-- @ai-rules/general.md — Engineering principles and project standards
-- @ai-rules/kotlin-multiplatform.md — Kotlin/KMP specific patterns and requirements
+- @docs/ai-rules/general.md — Engineering principles and project standards
+- @docs/ai-rules/kotlin-multiplatform.md — Kotlin/KMP specific patterns and requirements
 
 **Domain-specific rules (load as needed):**
-- @ai-rules/image-processing.md — Image handling and optimization patterns
-- @ai-rules/llm-integration.md — LLM API interaction and sequential request management
-- @ai-rules/cli-design.md — Command-line interface patterns and user experience
-- @ai-rules/configuration.md — JSON configuration schema and parsing
-- @ai-rules/testing.md — Testing strategies and patterns for this project
+- @docs/ai-rules/image-processing.md — Image handling and optimization patterns
+- @docs/ai-rules/llm-integration.md — LLM API interaction and sequential request management
+- @docs/ai-rules/cli-design.md — Command-line interface patterns and user experience
+- @docs/ai-rules/configuration.md — JSON configuration schema and parsing
+- @docs/ai-rules/testing.md — Testing strategies and patterns for this project
 
 ---
 
@@ -236,7 +236,7 @@ class LLMRequestQueue {
 ### Configuration
 
 - **Source**: JSON file provided by user at runtime
-- **Schema**: See `@ai-rules/configuration.md`
+- **Schema**: See `@docs/ai-rules/configuration.md`
 - **Validation**: All paths verified, LLM connection tested during initialization
 - **Usage**: Injected into workflow orchestrator
 
@@ -275,21 +275,21 @@ class LLMRequestQueue {
 
 ### When Working with Configuration
 
-1. Load @ai-rules/configuration.md
+1. Load @docs/ai-rules/configuration.md
 2. Follow JSON schema strictly
 3. Validate early with clear error messages
 4. Provide sensible defaults where appropriate
 
 ### When Implementing Image Processing
 
-1. Load @ai-rules/image-processing.md
+1. Load @docs/ai-rules/image-processing.md
 2. Verify format support
 3. Test optimization output quality
 4. Handle errors gracefully (corrupted files)
 
 ### When Integrating with LLM
 
-1. Load @ai-rules/llm-integration.md
+1. Load @docs/ai-rules/llm-integration.md
 2. Remember: Sequential requests only
 3. Queue-based request management
 4. Parse responses to domain objects
@@ -402,7 +402,7 @@ Load: `general.md` (review code style and patterns)
 ## Getting Started
 
 1. **Read this document** to understand project scope and architecture
-2. **Load @ai-rules/rule-loading.md** to understand which rules apply to your task
+2. **Load @docs/ai-rules/rule-loading.md** to understand which rules apply to your task
 3. **Load domain-specific rules** based on the task at hand
 4. **Reference AGENTS.md** when context-switching between tasks
 5. **Update rules** if you discover patterns worth encoding for future work

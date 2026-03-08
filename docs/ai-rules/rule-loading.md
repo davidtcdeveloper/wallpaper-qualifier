@@ -109,54 +109,54 @@ This file tells you which rules to load based on your task. Instead of loading a
 
 ### When starting a new CLI command or feature:
 ```
-1. Load: general.md (foundation)
-2. Load: kotlin-multiplatform.md (coding patterns)
-3. Load: cli-design.md (if touching CLI)
-4. Load: domain-specific rule (e.g., image-processing.md if image-related)
+1. Load: docs/ai-rules/general.md (foundation)
+2. Load: docs/ai-rules/kotlin-multiplatform.md (coding patterns)
+3. Load: docs/ai-rules/cli-design.md (if touching CLI)
+4. Load: domain-specific rule (e.g., docs/ai-rules/image-processing.md if image-related)
 ```
 
 ### When implementing image processing:
 ```
-1. Load: general.md
-2. Load: kotlin-multiplatform.md
-3. Load: image-processing.md (primary focus)
-4. Load: testing.md (test your implementation)
+1. Load: docs/ai-rules/general.md
+2. Load: docs/ai-rules/kotlin-multiplatform.md
+3. Load: docs/ai-rules/image-processing.md (primary focus)
+4. Load: docs/ai-rules/testing.md (test your implementation)
 ```
 
 ### When integrating with LLM:
 ```
-1. Load: general.md
-2. Load: kotlin-multiplatform.md
-3. Load: llm-integration.md (primary focus)
-4. Load: testing.md (important for mocking LLM)
+1. Load: docs/ai-rules/general.md
+2. Load: docs/ai-rules/kotlin-multiplatform.md
+3. Load: docs/ai-rules/llm-integration.md (primary focus)
+4. Load: docs/ai-rules/testing.md (important for mocking LLM)
 ```
 
 ### When working on configuration:
 ```
-1. Load: general.md
-2. Load: configuration.md (primary focus)
-3. Load: cli-design.md (for error messages and user guidance)
+1. Load: docs/ai-rules/general.md
+2. Load: docs/ai-rules/configuration.md (primary focus)
+3. Load: docs/ai-rules/cli-design.md (for error messages and user guidance)
 ```
 
 ### When fixing a bug:
 ```
-1. Load: general.md
-2. Load: kotlin-multiplatform.md
+1. Load: docs/ai-rules/general.md
+2. Load: docs/ai-rules/kotlin-multiplatform.md
 3. Load: domain-specific rule for the affected module
-4. Load: testing.md (to verify your fix)
+4. Load: docs/ai-rules/testing.md (to verify your fix)
 ```
 
 ### When writing tests:
 ```
-1. Load: general.md
-2. Load: kotlin-multiplatform.md (coroutines, async patterns)
-3. Load: testing.md (primary focus)
+1. Load: docs/ai-rules/general.md
+2. Load: docs/ai-rules/kotlin-multiplatform.md (coroutines, async patterns)
+3. Load: docs/ai-rules/testing.md (primary focus)
 4. Load: domain-specific rule(s) being tested
 ```
 
 ### Before committing:
 ```
-1. Load: general.md (review code style and patterns)
+1. Load: docs/ai-rules/general.md (review code style and patterns)
 2. Run: ./gradlew ktlintFormat ktlint test
 3. Verify all checks pass
 ```
@@ -187,7 +187,7 @@ The goal is to provide relevant guidance WITHOUT overwhelming context. Here's ho
 
 Example: You're adding HEIC format support.
 
-1. Load `image-processing.md` to understand existing patterns
+1. Load `docs/ai-rules/image-processing.md` to understand existing patterns
 2. Find the "Format Support" section
 3. Review examples for similar formats (e.g., WebP)
 4. Check the checklist for what you need to verify
@@ -203,18 +203,18 @@ When working on a complex task, you may need multiple rule files:
 **Task**: Add new analysis step to profile generation
 
 **Rules to load**:
-1. `general.md` — architectural decision making
-2. `kotlin-multiplatform.md` — implementation patterns
-3. `image-processing.md` — image-specific details
-4. `llm-integration.md` — how to call LLM for analysis
-5. `testing.md` — verify implementation with tests
+1. `docs/ai-rules/general.md` — architectural decision making
+2. `docs/ai-rules/kotlin-multiplatform.md` — implementation patterns
+3. `docs/ai-rules/image-processing.md` — image-specific details
+4. `docs/ai-rules/llm-integration.md` — how to call LLM for analysis
+5. `docs/ai-rules/testing.md` — verify implementation with tests
 
 **How to use them together**:
-- Use `general.md` to design the feature (separation of concerns, naming)
-- Use `kotlin-multiplatform.md` for async/await patterns
-- Use `image-processing.md` for image input handling
-- Use `llm-integration.md` for prompt construction and response parsing
-- Use `testing.md` to ensure correctness
+- Use `docs/ai-rules/general.md` to design the feature (separation of concerns, naming)
+- Use `docs/ai-rules/kotlin-multiplatform.md` for async/await patterns
+- Use `docs/ai-rules/image-processing.md` for image input handling
+- Use `docs/ai-rules/llm-integration.md` for prompt construction and response parsing
+- Use `docs/ai-rules/testing.md` to ensure correctness
 
 ---
 
@@ -237,13 +237,13 @@ Examples of future candidates:
 
 | Rule File | Scope | Focus |
 |-----------|-------|-------|
-| `general.md` | Entire project | Code quality, architecture, naming |
-| `kotlin-multiplatform.md` | Language & runtime | Kotlin idioms, KMP specifics, async |
-| `image-processing.md` | Image module | Format handling, optimization, quality |
-| `llm-integration.md` | LLM module | API integration, queuing, serialization |
-| `configuration.md` | Config module | Schema design, validation, defaults |
-| `cli-design.md` | CLI module | Argument handling, feedback, errors |
-| `testing.md` | Test suite | Unit, integration, mocking, concurrency |
+| `docs/ai-rules/general.md` | Entire project | Code quality, architecture, naming |
+| `docs/ai-rules/kotlin-multiplatform.md` | Language & runtime | Kotlin idioms, KMP specifics, async |
+| `docs/ai-rules/image-processing.md` | Image module | Format handling, optimization, quality |
+| `docs/ai-rules/llm-integration.md` | LLM module | API integration, queuing, serialization |
+| `docs/ai-rules/configuration.md` | Config module | Schema design, validation, defaults |
+| `docs/ai-rules/cli-design.md` | CLI module | Argument handling, feedback, errors |
+| `docs/ai-rules/testing.md` | Test suite | Unit, integration, mocking, concurrency |
 
 ---
 
@@ -262,18 +262,18 @@ Example agent behavior:
 User: "Add TIFF image format support"
 Agent thinks:
   - This affects image processing
-  - Load: general.md, kotlin-multiplatform.md, image-processing.md
-  - Not needed: llm-integration.md, testing.md (yet)
-  - Reads image-processing.md section on "Format Support"
+  - Load: docs/ai-rules/general.md, docs/ai-rules/kotlin-multiplatform.md, docs/ai-rules/image-processing.md
+  - Not needed: docs/ai-rules/llm-integration.md, docs/ai-rules/testing.md (yet)
+  - Reads docs/ai-rules/image-processing.md section on "Format Support"
   - Implements based on HEIC/WebP examples
-  - When done, loads testing.md to verify
+  - When done, loads docs/ai-rules/testing.md to verify
 ```
 
 ---
 
 ## Integration with AGENTS.md
 
-This file (`rule-loading.md`) is referenced in **AGENTS.md** as:
+This file (`docs/ai-rules/rule-loading.md`) is referenced in **AGENTS.md** as:
 
 > Always load this file to understand which other files you need to load
 
