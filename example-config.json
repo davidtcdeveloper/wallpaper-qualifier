@@ -1,0 +1,18 @@
+{
+  "folders": {
+    "samples": "/path/to/sample/wallpapers",
+    "candidates": "/path/to/candidate/wallpapers",
+    "output": "/path/to/output/wallpapers",
+    "temp": "/tmp/wallpaper-qualifier"
+  },
+  "llm": {
+    "endpoint": "http://localhost:1234/api/v1",
+    "model": "llama2",
+    "apiKey": null
+  },
+  "processing": {
+    "maxParallelTasks": 8,
+    "outputFormat": "original",
+    "jpegQuality": 90
+  }
+}
