@@ -6,7 +6,7 @@ You integrate with LLM services PRECISELY. You maintain STRICT sequential orderi
 
 ## Overview
 
-The Wallpaper Qualifier communicates with LMStudio (or compatible LLM service) via HTTP API. All LLM requests MUST be sequential - never parallel. This document covers client implementation, prompt design, and response handling.
+The Wallpaper Qualifier communicates with LLM services (OpenAI, Anthropic, Google, or LMStudio) via HTTP API using any provider supported by Kotlin Koog. All LLM requests MUST be sequential - never parallel. This document covers client implementation, prompt design, and response handling.
 
 ---
 
@@ -18,6 +18,7 @@ The Wallpaper Qualifier communicates with LMStudio (or compatible LLM service) v
 - Sequential ordering ensures fair LLM resource usage
 - Prevents API rate limit issues
 - Makes progress reporting meaningful (request N of M)
+- No retry strategy for failed requests in the first version (fail-fast behavior)
 
 **MUST**:
 - ✓ Use `Channel<Request>` to enforce sequentiality
@@ -231,10 +232,10 @@ Tell me what you think about it.
 ---
 
 <rule_4 priority="HIGH">
-**ERROR HANDLING & RECOVERY**: LLM services can fail. Handle gracefully with retries (future) and fallback strategies.
-- Network errors should retry
+**ERROR HANDLING & RECOVERY**: LLM services can fail. Handle gracefully with fail-fast strategies in the first version.
+- Network errors should report and stop (no retries)
 - API errors should fail fast
-- Timeout should retry
+- Timeout should report clearly
 - Invalid responses should not crash
 - Log all failures for debugging
 
@@ -242,7 +243,7 @@ Tell me what you think about it.
 - ✓ Distinguish network errors from API errors
 - ✓ Log request/response for debugging
 - ✓ Timeout after reasonable interval (30s for this project)
-- ✓ Don't retry on validation errors (won't help)
+- ✓ Fail fast on all LLM errors in first version
 - ✓ Propagate errors up with context
 
 **Example - Good**:

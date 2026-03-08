@@ -151,6 +151,7 @@ object ImageOptimization {
     const val PNG_COMPRESSION_LEVEL = 9
     const val MAX_DIMENSION_PIXELS = 4096
     const val MAX_FILE_SIZE_BYTES = 2_097_152
+    const val BATCH_SIZE = 100 // Process in chunks of 100 to balance speed and memory
 }
 
 suspend fun optimizeImage(image: Image): OptimizedImage {

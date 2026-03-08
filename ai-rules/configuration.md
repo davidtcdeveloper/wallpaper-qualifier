@@ -35,22 +35,25 @@ The Wallpaper Qualifier is configured via JSON file. Users must not edit code to
     "output": "/Users/user/Wallpapers/Qualified"
   },
   "llm": {
+    "provider": "openai|anthropic|google|lmstudio",
+    "apiKey": "your-api-key",
     "endpoint": "http://localhost:1234/api/v1",
     "model": "mistral-7b",
-    "timeout_seconds": 30
+    "timeout": 30,
+    "retryAttempts": 3
   },
   "processing": {
-    "max_parallel_tasks": 8,
-    "output_format": "png",
-    "jpeg_quality": 85,
-    "max_file_size_mb": 2,
-    "quality_threshold": 0.7
+    "maxParallelTasks": 8,
+    "outputFormat": "png",
+    "jpegQuality": 85,
+    "maxFileSize": 2097152,
+    "qualityThreshold": 0.7
   },
   "options": {
-    "save_profile": true,
-    "profile_path": "/Users/user/.wallpaper-qualifier/profile.json",
+    "saveProfile": true,
+    "profilePath": "/Users/user/.wallpaper-qualifier/profile.json",
     "verbose": true,
-    "skip_duplicates": true
+    "skipDuplicates": true
   }
 }
 ```
@@ -74,34 +77,28 @@ data class FoldersConfig(
 
 @Serializable
 data class LLMConfig(
+    val provider: String,     // Required: openai, anthropic, google, or lmstudio
+    val apiKey: String? = null,
     val endpoint: String = "http://localhost:1234/api/v1",
     val model: String,        // Required: model name/ID
-    @SerialName("timeout_seconds")
-    val timeoutSeconds: Int = 30
+    val timeout: Int = 30,
+    val retryAttempts: Int = 0 // Not implemented in first version
 )
 
 @Serializable
 data class ProcessingConfig(
-    @SerialName("max_parallel_tasks")
     val maxParallelTasks: Int = 8,
-    @SerialName("output_format")
     val outputFormat: ImageFormat = ImageFormat.PNG,
-    @SerialName("jpeg_quality")
     val jpegQuality: Int = 85,
-    @SerialName("max_file_size_mb")
-    val maxFileSizeMb: Int = 2,
-    @SerialName("quality_threshold")
+    val maxFileSize: Int = 2097152, // 2MB
     val qualityThreshold: Float = 0.7
 )
 
 @Serializable
 data class OptionsConfig(
-    @SerialName("save_profile")
     val saveProfile: Boolean = true,
-    @SerialName("profile_path")
     val profilePath: String? = null,
     val verbose: Boolean = false,
-    @SerialName("skip_duplicates")
     val skipDuplicates: Boolean = true
 )
 
@@ -148,7 +145,7 @@ fun validateConfig(config: Config): List<ConfigError> {
     if (config.processing.jpegQuality !in 1..100) {
         errors.add(
             ConfigError.InvalidValue(
-                field = "processing.jpeg_quality",
+                field = "processing.jpegQuality",
                 value = config.processing.jpegQuality.toString(),
                 reason = "Must be between 1 and 100"
             )
@@ -158,7 +155,7 @@ fun validateConfig(config: Config): List<ConfigError> {
     if (config.processing.qualityThreshold !in 0f..1f) {
         errors.add(
             ConfigError.InvalidValue(
-                field = "processing.quality_threshold",
+                field = "processing.qualityThreshold",
                 value = config.processing.qualityThreshold.toString(),
                 reason = "Must be between 0.0 and 1.0"
             )

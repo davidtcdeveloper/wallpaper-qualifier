@@ -42,7 +42,7 @@ This document serves as the entry point for understanding the project, its archi
 
 - **Language**: Kotlin Multiplatform (KMP) targeting macOS
 - **UI**: Command-line interface only (no GUI)
-- **LLM Integration**: External LLM service (LMStudio or compatible)
+- **LLM Integration**: External LLM service (User choice, any provider supported by Kotlin Koog; LMStudio as local default)
 - **Image Processing**: Kotlin Koog framework
 - **File Formats**: Support JPEG, PNG, HEIC, WebP, TIFF, BMP, GIF, and RAW formats
 - **Concurrency**: Parallel file I/O and image processing; sequential LLM requests only
@@ -337,11 +337,11 @@ class ImageProcessorTest {
 
 ---
 
-## Environment
+### Environment
 
 ### Development Requirements
 
-- **macOS 13+** (development machine)
+- **macOS 26+** (development machine)
 - **Kotlin 1.9+**
 - **Gradle 8.0+**
 - **Java 17+** (for Kotlin compilation)
@@ -349,15 +349,16 @@ class ImageProcessorTest {
 
 ### Build Environment
 
-- **Target**: macOS 13+ binary
+- **Target**: macOS 26+ binary
 - **Architecture**: x86_64 (Intel) or arm64 (Apple Silicon)
 - **Output**: Self-contained executable or JAR
 
 ### Runtime Requirements
 
-- **macOS 13+**
+- **macOS 26+**
 - **LMStudio** service running on local network
 - **Disk Space**: Depends on image batch sizes (recommend 10GB+ free)
+- **Memory**: <2GB for processing batches of 1000 images
 
 ---
 
