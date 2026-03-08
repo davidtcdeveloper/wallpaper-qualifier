@@ -30,3 +30,8 @@
 5. **Error Handling**:
   - Provide consistent error handling mechanisms across both the CLI tool and the LMStudio API.
 
+6. **Temp Folder Isolation**:
+   - All temporary files must be stored in the user-specified temp folder.
+   - Ensure the temp folder is validated during configuration initialization.
+   - Implement cleanup routines to remove temporary files as soon as they are no longer needed.
+   - Document the temp folder requirement clearly in user-facing documentation.

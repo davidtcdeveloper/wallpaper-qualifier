@@ -32,6 +32,7 @@ For the Wallpaper Qualifier CLI, the following approaches are considered. The **
 | **LLM provider**        | OpenAI GPT-4 Vision, Anthropic Claude 3, Google Gemini Vision, any provider supported by Koog | **User choice (any supported by Koog)**; no specific recommendation |
 | **Retry policy**        | 3 retries with exponential backoff, no retries                                           | **No retry strategy** |
 | **Performance targets** | <5s per image, 100 images in <10 minutes; none for first version                         | **None for first version** |
+| **Temp folder isolation** | Isolated temp folder with immediate cleanup                                              | **Isolated temp folder; delete files immediately after use** |
 
 ---
 

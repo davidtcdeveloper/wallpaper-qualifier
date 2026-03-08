@@ -28,6 +28,14 @@
   - Entirely CLI-based, no GUI.
   - Standard I/O for interactions.
   - Unix-style exit codes (0 = success, non-zero = error).
+
+- **TR-002a: Temporary File Isolation**
+  - Application must not modify any file or folder structure outside a designated `temp` folder.
+  - `temp` folder path must be provided as a configuration parameter in the JSON file.
+  - All temporary files, intermediate processing outputs, and scratch data must reside in the `temp` folder.
+  - Files and folders within `temp` must be removed as soon as they are no longer needed to minimize disk usage.
+  - Only the final optimized images should be written to the configured output folder.
+  - Original sample and candidate images must never be modified.
 - **TR-003: Kotlin Multiplatform Implementation**
   - Built using **Kotlin Multiplatform** targeting macOS.
   - **Clarification needed**: Kotlin/Native for macOS or Kotlin/JVM with macOS bindings?
@@ -44,16 +52,15 @@
 - **TR-006: Format Support**
   - Supports: JPEG, PNG, HEIC, WebP, TIFF, BMP, GIF, and RAW formats (e.g., CR2, NEF, ARW, DNG).
   - **Clarification needed**: Which RAW formats to prioritize?
-- **TR-007: Image Optimization**
-  - Converts images to JPEG/PNG.
-  - **Clarification needed**: User preference for output format or automatic selection?
-  - Reduces file size while preserving quality.
-  - **Clarification needed**: Target file size or quality level (e.g., "under 2MB" or "JPEG quality 85").
+- **TR-007: Image Conversion for Analysis**
+  - Converts images to JPEG/PNG for LLM analysis (temporary, used only for processing).
+  - Original format images are copied to output folder without modification.
+  - Preserves image quality during conversion.
 
 ### Performance & Concurrency
 
 - **TR-008: Parallel Processing**
-  - Parallelizes file I/O, image decoding, format conversion, and optimization.
+  - Parallelizes file I/O, image decoding, format conversion (for analysis).
   - **Clarification needed**: Maximum parallel thread count or system-determined?
 - **TR-009: Resource Management**
   - Efficient memory usage for large batches.
@@ -102,6 +109,7 @@
 | Q-008       | Performance targets (time per image, throughput)?             | **Suggestion**: **<5s per image**, **100 images in <10 minutes**.                                 | **None for first version** |
 | Q-009       | Memory usage constraints?                                     | **Suggestion**: **<2GB for 1000 images**.                                                         | **<2GB for 1000 images**. |
 | Q-010       | Minimum recommended sample set size?                          | **Suggestion**: **5-10 images** for a robust quality profile.                                     | **5-10 images**. |
+| Q-011       | Temp folder cleanup strategy?                                 | **Suggestion**: Delete temp files immediately after use; handle cleanup failures gracefully.       | **Delete immediately after use; log cleanup failures**. |
 
 
 ---
@@ -114,11 +122,12 @@
 | **Framework**           | Kotlin Koog suitability   | Kotlin Koog, Skiko, native macOS APIs, JVM libraries           | Use **Kotlin Koog** for image processing and file I/O.          | **Kotlin Koog**       |
 | **Image Processing**    | Library selection         | Kotlin Koog, Skiko, native APIs, Apache Commons Imaging, TwelveMonkeys     | **Kotlin Koog** for compatibility.                      | **Kotlin Koog**       |
 | **LLM Provider**        | Provider selection        | Any provider supported by Koog                                | No specific recommendation; user selects any supported provider. | **User choice (any supported by Koog)** |
-| **Output Format**       | JPEG vs. PNG              | Configurable, default to PNG                                  | Default to **PNG**, offer JPEG as an option.                    | Default to **PNG**, offer JPEG as an option. |
+| **Output Format**       | Lossless vs. optimized    | Copy original format with best quality or optimize/compress    | Copy **original format with best quality** (lossless where possible). | Copy original format with best quality. |
 | **Parallel Processing** | Thread count              | System-determined or capped                                   | **System-determined with a cap of 8 threads**.                  | **System-determined with a cap of 8 threads**. |
 | **Batch Processing**    | Memory management         | Batch size for processing                                     | **100 images per batch** to balance speed and memory.           | **100 images per batch**. |
 | **Retry Policy**        | LLM request retries       | Number of attempts and backoff strategy                       | No retries (first version).                                     | **No retry strategy** |
 | **Performance Targets** | Time per image/throughput | User-defined or default targets                               | None for first version.                                         | **None for first version** |
+| **Temp Folder Isolation** | File modification scope | Isolated temp folder or no restriction                        | **Isolated temp folder** with immediate cleanup of temporary files. | **Isolated temp folder; delete immediately after use**. |
 
 
 ---

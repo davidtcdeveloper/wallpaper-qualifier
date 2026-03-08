@@ -18,9 +18,11 @@ The app should be build in Kotlin using Kotlin Multiplatform with macOS as targe
 
 The app should run as many steps in parallel as possible, but only one request must be sent to the LLM at time. No parallel requests to the LLM.
 
-The app must accept as many image formats as possible. Each file must be converted to a widely supported format like jpeg or png and optimized to reduce file size.
+The app must accept as many image formats as possible. Each file must be converted to a widely supported format like jpeg or png for LLM analysis, but the output copies should preserve the original format with best quality.
 
 The app should accept a json file as input. That file should contain things like folders, LLM connection parameters and anything else.
+
+The app must not modify any file or folder structure outside of a designated `temp` folder. The `temp` folder path must be provided as a configuration parameter in the JSON file. Files and folders created within the `temp` directory must be removed as soon as they are no longer needed to minimize disk usage.
 
 ## 01.RefinedSpec.md
 
@@ -93,7 +95,7 @@ As a user, I want qualified wallpapers automatically copied to an output folder,
 **Acceptance Criteria:**
 
 - System copies only "good" wallpapers to specified output folder
-- Images are optimized during copy (format conversion, file size reduction)
+- Images are copied in their original format with best quality (lossless where possible)
 - Original filenames are preserved or enhanced with metadata
 - Duplicate detection prevents redundant copies
 - Summary report shows how many images were selected
@@ -105,10 +107,11 @@ As a user, I want to configure the system via a JSON file, so I can customize be
 **Acceptance Criteria:**
 
 - JSON configuration file specifies all operational parameters
-- Configuration includes: sample folder, candidate folder, output folder, LLM connection details
+- Configuration includes: sample folder, candidate folder, output folder, temp folder, LLM connection details
 - Configuration includes: optimization settings, quality thresholds, parallel processing limits
 - Invalid configuration produces clear error messages
 - Configuration can be validated before execution
+- Temp folder path is validated and must be writable
 
 ---
 
@@ -128,6 +131,15 @@ As a user, I want to configure the system via a JSON file, so I can customize be
 - No graphical user interface required
 - Standard input/output for all interactions
 - Exit codes follow Unix conventions (0 = success, non-zero = error)
+
+**TR-002a: Temporary File Isolation**
+
+- Application must not modify any file or folder structure outside a designated `temp` folder
+- `temp` folder path must be specified in the JSON configuration file under `folders.temp`
+- All temporary files, intermediate processing outputs, and scratch data must reside within the `temp` folder
+- Files and folders created within `temp` must be removed as soon as they are no longer needed
+- Only the final qualified images in their original format should be written to the configured output folder
+- Original sample and candidate images must never be modified under any circumstances
 
 **TR-003: Kotlin Multiplatform Implementation**
 
@@ -160,13 +172,12 @@ As a user, I want to configure the system via a JSON file, so I can customize be
 - [NEEDS CLARIFICATION: Which RAW formats? CR2, NEF, ARW, DNG?]
 - Automatic format detection (not relying solely on file extension)
 
-**TR-007: Image Optimization**
+**TR-007: Image Conversion for Analysis**
 
-- Convert all images to widely supported format (JPEG or PNG)
-- [NEEDS CLARIFICATION: User preference for output format, or automatic selection based on image characteristics?]
-- Reduce file size while maintaining visual quality
-- [NEEDS CLARIFICATION: Target file size or quality level? E.g., "under 2MB" or "JPEG quality 85"?]
-- Preserve aspect ratio during any resizing operations
+- Convert images to widely supported format (JPEG or PNG) for LLM analysis
+- This conversion is temporary and used only for processing
+- Preserve aspect ratio during conversion
+- Original format images are copied to output folder without modification
 
 ### 2.4 Performance & Concurrency
 
@@ -196,7 +207,8 @@ As a user, I want to configure the system via a JSON file, so I can customize be
   "folders": {
     "samples": "/path/to/sample/wallpapers",
     "candidates": "/path/to/candidate/wallpapers",
-    "output": "/path/to/output/wallpapers"
+    "output": "/path/to/output/wallpapers",
+    "temp": "/path/to/temp/folder"
   },
   "llm": {
     "provider": "openai|anthropic|google",
@@ -264,9 +276,9 @@ As a user, I want to configure the system via a JSON file, so I can customize be
 **Phase 5: Curation**
 
 1. For each qualified image (in parallel):
-- Optimize image (format conversion, compression)
+- Retrieve original image file
 - Check for duplicates in output folder
-- Copy to output folder
+- Copy to output folder with original format and best quality
 1. Generate summary report
 2. Display results to user
 
@@ -335,6 +347,8 @@ Provide structured output in JSON format.
 - Original images never modified
 - Atomic file operations (no partial writes)
 - Verification of copied files
+- All temporary files remain isolated within the `temp` folder
+- Application does not modify any file or folder structure outside the `temp` folder (except for the final output folder where qualified images are copied)
 
 ### 4.3 Usability
 
@@ -388,6 +402,13 @@ Provide structured output in JSON format.
 - LLM request serialization may create bottleneck for large batches
 - Processing time scales linearly with number of images
 
+**C-004: Temp Folder Isolation**
+
+- Application must have write and delete permissions on the temp folder
+- Temp folder must be on a filesystem that supports atomic operations
+- Insufficient disk space in temp folder will cause processing failures
+- Temp folder cleanup may be delayed if files are locked by system processes
+
 ### 5.2 Assumptions
 
 **A-001: Sample Quality**
@@ -404,7 +425,9 @@ Provide structured output in JSON format.
 
 - User has read access to sample and candidate folders
 - User has write access to output folder
-- Sufficient disk space available for optimized copies
+- User has write and delete access to temp folder
+- Sufficient disk space available for temp files and output copies
+- Temp folder path is accessible and not a system-protected directory
 
 ---
 
@@ -414,7 +437,7 @@ Provide structured output in JSON format.
 
 - System successfully analyzes sample images and generates quality profile
 - System accurately evaluates candidate images (>80% user agreement with selections)
-- Qualified images are correctly copied and optimized
+- Qualified images are correctly copied in original format with best quality
 - Configuration file controls all operational parameters
 
 ### 6.2 Technical Success
@@ -428,7 +451,7 @@ Provide structured output in JSON format.
 
 - User can run entire workflow with single command
 - Progress is clearly visible throughout processing
-- Results are immediately usable (optimized images in output folder)
+- Results are immediately usable (qualified images in original format with best quality)
 - Configuration is intuitive and well-documented
 
 ---
@@ -560,7 +583,7 @@ Provide structured output in JSON format.
 - **Quality Profile**: Aggregated characteristics and criteria derived from sample analysis
 - **Candidate Images**: Wallpapers to be evaluated against the quality profile
 - **Qualification**: Binary or scored assessment of whether a candidate matches the profile
-- **Curation**: Process of copying qualified images to output folder with optimization
+- **Curation**: Process of copying qualified images to output folder in original format with best quality
 - **LLM**: Large Language Model with vision capabilities (e.g., GPT-4 Vision, Claude 3)
 
 ### 10.2 References
