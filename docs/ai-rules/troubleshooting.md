@@ -1,6 +1,14 @@
 # TROUBLESHOOTING & COMMON ISSUES
 
-**Guide to resolving problems during implementation**
+**Project:** Wallpaper Qualifier  
+**Purpose:** Guide to resolving problems during implementation and help AI agents make decisions  
+**Scope:** Build issues, image processing, LLM integration, file operations, performance  
+
+This document captures recurring problems and their solutions during Wallpaper Qualifier development. Use this guide when:
+- You encounter build or runtime errors
+- You need to make architectural decisions (e.g., fallback strategies)
+- You want to understand why specific approaches were chosen
+- You're implementing workarounds for framework limitations
 
 ---
 
@@ -568,9 +576,9 @@ class DebugLLMClient {
 
 If issue cannot be resolved:
 
-1. **Check TROUBLESHOOTING.md** (this file)
-2. **Review relevant PHASE documentation** (e.g., PHASE-3-LLM-INTEGRATION.md for LLM issues)
-3. **Check ARCHITECTURE-DETAILS.md** for design decisions
+1. **Review this troubleshooting guide** (you're reading it)
+2. **Review relevant PHASE documentation** (e.g., @docs/implementation-breakdown/PHASE-3-LLM-INTEGRATION.md for LLM issues)
+3. **Check other ai-rules** (e.g., @docs/ai-rules/general.md, @docs/ai-rules/kotlin-multiplatform.md)
 4. **Review specs:** `/docs/specs/0-initial-specs/`
 5. **Escalate to team lead** with:
    - Error message (full stack trace)
@@ -580,4 +588,5 @@ If issue cannot be resolved:
 
 ---
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-03-08  
+**Status:** Project-specific guide for decision-making and implementation

@@ -25,7 +25,7 @@ For a developer starting from scratch:
 3. **Move to PHASE-2-IMAGE-PROCESSING.md** once foundation complete
 4. Continue through PHASE-3, PHASE-4, PHASE-5
 5. **Reference the DEPENDENCY-MAP.md** to understand task relationships
-6. **Consult TROUBLESHOOTING.md** if dependencies or conflicts arise
+6. **Consult @docs/ai-rules/troubleshooting.md** if issues arise during development
 
 ---
 
@@ -301,6 +301,11 @@ See the following files for complete task breakdowns:
 - **[PHASE-4-CORE-LOGIC.md](./PHASE-4-CORE-LOGIC.md)** — 11 detailed tasks
 - **[PHASE-5-POLISH-TESTING.md](./PHASE-5-POLISH-TESTING.md)** — 6 detailed tasks
 
+**Supporting Documentation:**
+- **[DEPENDENCY-MAP.md](./DEPENDENCY-MAP.md)** — Task dependencies and parallel execution strategy
+- **[@docs/ai-rules/troubleshooting.md](../ai-rules/troubleshooting.md)** — Common issues and decision-making guidance
+- **[KOOG-STRATEGY.md](./KOOG-STRATEGY.md)** — Strategic decision for Koog-centric LLM integration
+
 ---
 
 ## Constraint Verification Checklist
@@ -396,8 +401,8 @@ docs/implementation-breakdown/
 
 If you encounter:
 
-- **Kotlin Koog integration issues:** See TROUBLESHOOTING.md → LMStudio Integration
-- **Image format problems:** See TROUBLESHOOTING.md → Image Processing
+- **Kotlin Koog integration issues:** See @docs/ai-rules/troubleshooting.md → LMStudio Integration
+- **Image format problems:** See @docs/ai-rules/troubleshooting.md → Image Processing
 - **Architecture clarifications:** See ARCHITECTURE-DETAILS.md
 - **Configuration questions:** See CONFIG-SCHEMA.md
 

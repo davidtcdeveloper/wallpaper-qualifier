@@ -201,7 +201,7 @@ Once Koog integration mature, potential enhancements:
 
 - [PHASE-3-LLM-INTEGRATION.md](./PHASE-3-LLM-INTEGRATION.md) — Detailed implementation tasks
 - [DEPENDENCY-MAP.md](./DEPENDENCY-MAP.md) — Critical path and timeline impact
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — Koog integration issues and solutions
+- [@docs/ai-rules/troubleshooting.md](../ai-rules/troubleshooting.md) — Common issues and decision-making guidance
 
 ---
 

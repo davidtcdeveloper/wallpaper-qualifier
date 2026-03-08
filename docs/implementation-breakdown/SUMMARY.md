@@ -135,7 +135,7 @@ Total: ~39 days (7+10+12+10)
 | **Language** | Kotlin Multiplatform | Cross-platform, JVM interop |
 | **Build** | Gradle (KMP) | Standard for Kotlin projects |
 | **Image Processing** | Kotlin Koog + macOS APIs | Best available for KMP |
-| **LLM Client** | Custom HTTP + Kotlin Coroutines | Koog doesn't support LMStudio |
+| **LLM Client** | Kotlin Koog (Koog-centric approach) | Maximizes framework features; minimal custom code |
 | **Config** | kotlinx-serialization (JSON) | Standard for Kotlin |
 | **Concurrency** | Kotlin Coroutines | Built-in, KMP-compatible |
 
@@ -211,7 +211,7 @@ Total: ~39 days (7+10+12+10)
 2. **Identify Blockers:** List questions or concerns
 3. **Resource Planning:** Assign developers to phases
 4. **Start PHASE 1:** Begin with Gradle and project setup
-5. **Prototype Early:** Start Koog and LMStudio research in parallel with PHASE 1
+5. **Consult ai-rules:** Reference @docs/ai-rules/troubleshooting.md for guidance during implementation
 
 ---
 
