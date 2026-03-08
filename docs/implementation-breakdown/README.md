@@ -12,7 +12,7 @@ This document provides a detailed step-by-step breakdown for implementing the Wa
 
 The breakdown organizes implementation into **5 major phases**, each containing specific milestones and deliverables. Each phase builds upon previous phases and respects critical constraints (sequential LLM requests, file isolation, format support).
 
-**Total Implementation Steps:** 42 major tasks across 5 phases
+**Total Implementation Steps:** 41 major tasks across 5 phases
 
 ---
 
@@ -111,18 +111,17 @@ Deliverables:
 
 **Depends On:** PHASE 1, 2, and 3 complete
 
-### PHASE 5: POLISH & TESTING (Steps 37-42)
-**Focus:** Testing, optimization, documentation, release
+### PHASE 5: E2E TESTING & POLISH (Steps 37-41)
+**Focus:** End-to-end testing, optimization, documentation, release
 
 Deliverables:
-- Comprehensive unit test suite
-- Integration tests for workflows
-- Performance optimization
+- Test coverage verification and aggregation
+- End-to-end workflow testing
+- Performance profiling and optimization
 - User documentation
-- Example configurations
 - Release package
 
-**Duration:** ~8-10 days | **Effort:** 60-80 person-hours
+**Duration:** ~5-7 days | **Effort:** 40-50 person-hours
 
 **Depends On:** PHASE 1-4 complete
 
@@ -197,17 +196,9 @@ Deliverables:
 - Multimodal images processed correctly
 - Sequential LLM requests verified
 - Custom code minimized (prefer Koog features over custom implementation)
-8. Add error handling (network errors, timeouts, invalid responses)
-9. Create request/response logging for debugging
-10. Implement configuration validation for LLM connection
-
-**Success Criteria:**
-- Successfully connects to LMStudio on localhost:1234
-- Sends one request at a time (no parallel requests)
-- Parses multimodal responses (text + image analysis)
-- Handles connection failures gracefully
-- Bearer token authentication optional but supported
-- Request queue enforces sequential ordering
+- Error handling (network errors, timeouts, invalid responses) implemented via Koog
+- Request/response logging for debugging active
+- Configuration validation for LLM connection verified
 
 ---
 
@@ -237,28 +228,21 @@ Deliverables:
 
 ---
 
-### PHASE 5: POLISH & TESTING
+### PHASE 5: E2E TESTING & POLISH
 **File:** [PHASE-5-POLISH-TESTING.md](./PHASE-5-POLISH-TESTING.md)
 
 **Tasks:**
-1. Create unit test suite (60+ tests covering all modules)
-2. Create integration tests for workflows
-3. Create end-to-end tests with mock LLM
-4. Implement performance profiling and optimization
-5. Create user documentation (README, examples, troubleshooting)
-6. Create configuration examples (minimal, full, advanced)
-7. Perform security audit (no credentials in logs, safe temp handling)
-8. Create release package (executable, config template)
-9. Final testing on real macOS hardware
-10. Create release notes and version tagging
+1. Test coverage verification and aggregation
+2. End-to-end workflow testing
+3. Performance profiling and optimization
+4. User documentation creation
+5. Release package and distribution
 
 **Success Criteria:**
-- Test coverage >80% for critical paths
-- All workflows pass E2E tests
+- All PHASE 1-4 tests pass (>80% coverage)
+- E2E workflows pass reliably with mock LLM
 - Performance baseline documented
-- README clear for first-time users
-- Example configs work without modification
-- No sensitive data in logs or outputs
+- README and configuration guide complete
 - Release package ready for distribution
 
 ---
@@ -285,9 +269,9 @@ PHASE 5 (Polish & Testing)
 1. PHASE 1 (blocks everything)
 2. PHASE 2 + PHASE 3 (parallel, ~8-10 days each)
 3. PHASE 4 (must wait for 2+3, ~10-12 days)
-4. PHASE 5 (final polish, ~8-10 days)
+4. PHASE 5 (final polish, ~5-7 days)
 
-**Total Critical Path:** ~30-40 days with adequate parallelization
+**Total Critical Path:** ~36 days with adequate parallelization
 
 ---
 

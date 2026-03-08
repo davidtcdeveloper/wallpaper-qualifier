@@ -8,7 +8,7 @@
 
 ## What Was Created
 
-A comprehensive, step-by-step implementation breakdown for building the Wallpaper Qualifier application. The breakdown is organized into **5 phases** with **42 major tasks** spanning foundation, image processing, LLM integration, core logic, and final polish.
+A comprehensive, step-by-step implementation breakdown for building the Wallpaper Qualifier application. The breakdown is organized into **5 phases** with **41 major tasks** spanning foundation, image processing, LLM integration, core logic, and final polish.
 
 **Files Created:**
 - `README.md` — Overview and phase summaries
@@ -16,7 +16,7 @@ A comprehensive, step-by-step implementation breakdown for building the Wallpape
 - `PHASE-2-IMAGE-PROCESSING.md` — 10 image handling tasks
 - `PHASE-3-LLM-INTEGRATION.md` — 7 LLM integration tasks
 - `PHASE-4-CORE-LOGIC.md` — 11 core workflow tasks
-- `PHASE-5-POLISH-TESTING.md` — 6 testing and documentation tasks
+- `PHASE-5-POLISH-TESTING.md` — 5 testing and documentation tasks
 - `DEPENDENCY-MAP.md` — Task dependencies and parallel execution strategy
 - `TROUBLESHOOTING.md` — Common issues and solutions
 
@@ -80,8 +80,8 @@ A comprehensive, step-by-step implementation breakdown for building the Wallpape
 
 **Dependencies:** PHASE 1, 2, and 3 all required
 
-### PHASE 5: POLISH & TESTING (8-10 days) — After PHASE 4
-**Deliverables:** Unit tests (80%+ coverage), integration tests, E2E tests, performance profiling, documentation, release package
+### PHASE 5: E2E TESTING & POLISH (5-7 days) — After PHASE 4
+**Deliverables:** Coverage verification, E2E workflow tests, performance profiling, user documentation, release package
 
 **Dependencies:** PHASE 1-4 all required
 
@@ -98,30 +98,30 @@ PHASE 2 + PHASE 3: Days 8-17 (parallel)
   ↓
 PHASE 4: Days 18-29
   ↓
-PHASE 5: Days 30-39
+PHASE 5: Days 30-36
 
-Total: ~39 days (7+10+12+10)
+Total: ~36 days (7+10+12+7)
 ```
 
 ### Parallel Execution Opportunities
 
 - **PHASE 2 ↔ PHASE 3:** Can execute simultaneously (no dependencies)
-- **Within PHASE 2:** Task 1 (Koog prototype) blocks 70% of phase
+- **Within PHASE 2:** Task 1 (Koog Image Prototype) blocks 70% of phase
 - **Within PHASE 3:** Task 1 (LMStudio prototype) blocks 85% of phase
 - **Mitigation:** Start critical prototypes in PHASE 1 or as prep work
 
 ### Recommended Team Structure
 
-**Option 1: Serial (1 dev, 39 days)**
+**Option 1: Serial (1 dev, 44 days)**
 - Low cost, simple coordination
 
-**Option 2: Parallel (3 devs, 25-30 days)**
+**Option 2: Parallel (3 devs, 36 days)**
 - PHASE 1: Dev A
 - PHASE 2+3: Dev B + Dev C (parallel)
 - PHASE 4+5: Dev A + B (integration)
 
-**Option 3: Aggressive (4+ devs, 20-25 days)**
-- PHASE 1 research starts during PHASE 1 (Koog + LMStudio prototypes)
+**Option 3: Aggressive (4+ devs, 30-33 days)**
+- PHASE 1 research starts during PHASE 1 (Koog Image Prototype + LMStudio prototype)
 - Parallelizes critical path items early
 
 ---
