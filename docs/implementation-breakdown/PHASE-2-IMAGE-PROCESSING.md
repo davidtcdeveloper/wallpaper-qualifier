@@ -2,7 +2,7 @@
 
 **Duration:** ~8-10 days  
 **Effort:** 60-80 person-hours  
-**Tasks:** 10 major deliverables  
+**Tasks:** 10 major deliverables (each includes tests)  
 **Status:** Ready to execute after PHASE 1
 
 **Dependency:** PHASE 1 must be complete
@@ -12,6 +12,13 @@
 ## Overview
 
 Phase 2 implements image handling: format detection, loading, temporary format conversion for LLM analysis, and parallel file I/O operations. This phase establishes the image pipeline that feeds into LLM analysis (PHASE 3).
+
+**Testing Strategy (PHASE 2):**
+- Each task includes unit tests written alongside code
+- Tests use real image files (small test set in repo) and FakeLLMClient for mocking
+- Tests executed and fixed immediately as code is written
+- Focus on format support, error handling, and performance baselines
+- By phase end: Image pipeline fully tested and stable
 
 **Critical Success Factor:** Comprehensive format support (8+ formats) and robust handling of corrupted images. This is a high-risk area due to format complexity.
 
@@ -63,6 +70,14 @@ object ImageLoaderProto {
 - Consider `ImageMagick` or `libvips` bindings
 - Implement separate loaders per format as needed
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/ImageLoaderProtoTest.kt`
+- Test: Load JPEG image → verify dimensions and metadata
+- Test: Load PNG image → verify dimensions and metadata
+- Test: Corrupted image file → handled gracefully (no crash)
+- Test: Unsupported format → clear error message
+- Run: `./gradlew test` — all tests must pass
+
 **Estimated Effort:** 2-3 days (includes research and prototyping)
 
 ---
@@ -93,6 +108,15 @@ object ImageLoaderProto {
 - Corrupted files detected
 - Clear error for unsupported formats
 - Performance: <10ms per file detection
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/FormatDetectorTest.kt`
+- Test: JPEG file → correctly identified
+- Test: PNG file → correctly identified
+- Test: RAW file → correctly identified
+- Test: Corrupted file → detected and rejected
+- Test: Unsupported format → clear error
+- Run: `./gradlew test` — all tests must pass
 
 **Implementation Notes:**
 ```kotlin
@@ -128,6 +152,14 @@ object FormatDetector {
 - Corrupted files skipped with error log
 - Returns metadata for valid images
 - Scales to 10,000+ images
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/ImageLoaderTest.kt`
+- Test: Discover images in test folder → all found
+- Test: Unsupported format in folder → skipped with warning
+- Test: Corrupted file in folder → skipped with error log
+- Test: Nested directories → all images found recursively
+- Run: `./gradlew test` — all tests must pass
 
 **Implementation Notes:**
 ```kotlin
@@ -167,16 +199,14 @@ class ImageLoader(private val logger: Logger) {
 - Temp files cleaned up
 - No temp files left behind on error
 
-**Implementation Notes:**
-```kotlin
-class ImageConverter(private val tempFolder: String) {
-    fun convertToJpegForLLM(image: Image): Result<File> {
-        // Load image
-        // Convert to JPEG (temp folder)
-        // Return File path or failure
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/ImageConverterTest.kt`
+- Test: Convert JPEG → stored in temp as PNG
+- Test: Convert PNG → stored in temp as JPEG
+- Test: Aspect ratio preserved in conversion
+- Test: Conversion fails gracefully → error returned
+- Test: Temp files cleaned up on success
+- Run: `./gradlew test` — all tests must pass
 
 **Performance Consideration:**
 - Conversion is I/O and CPU intensive
@@ -207,22 +237,15 @@ class ImageConverter(private val tempFolder: String) {
 - Memory usage stays <2 GB for 1000 images
 - Progress reported smoothly
 
-**Implementation Notes:**
-```kotlin
-class FileIOCoordinator(private val maxThreads: Int = 8) {
-    fun processImagesInBatches(
-        images: List<Image>,
-        batchSize: Int = 100,
-        processor: suspend (Image) -> Result<ProcessedImage>
-    ): Result<List<ProcessedImage>> {
-        // Process in batches
-        // Use coroutine pool with max threads
-        // Collect and return results
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/FileIOCoordinatorTest.kt`
+- Test: Process batch of images in parallel
+- Test: Thread pool respects 8-thread limit
+- Test: Progress tracking works
+- Test: Error in one image doesn't crash entire batch
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 6: Duplicate Detection System
 
@@ -246,20 +269,14 @@ class FileIOCoordinator(private val maxThreads: Int = 8) {
 - Performance: <10ms per comparison
 - False positive rate <1%
 
-**Implementation Notes:**
-```kotlin
-class DuplicateDetector {
-    fun calculateHash(imagePath: String): Result<String> {
-        // SHA-256 or perceptual hash
-    }
-    
-    fun isDuplicate(hash1: String, hash2: String, threshold: Float = 0.95f): Boolean {
-        // Compare hashes
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/DuplicateDetectorTest.kt`
+- Test: Identical files → detected as duplicates
+- Test: Different files → not detected as duplicates
+- Test: Comparison performance acceptable
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 7: Image Metadata Extraction
 
@@ -281,22 +298,15 @@ class DuplicateDetector {
 - EXIF orientation handled
 - Works across all 8+ formats
 
-**Implementation Notes:**
-```kotlin
-data class ImageMetadata(
-    val width: Int,
-    val height: Int,
-    val aspectRatio: Float,
-    val colorDepth: Int,
-    val dpi: Int,
-    val bitDepth: Int,
-    val orientation: ImageOrientation,
-    val fileSize: Long,
-    val modificationDate: Long
-)
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/MetadataExtractionTest.kt`
+- Test: Extract metadata from JPEG → all properties correct
+- Test: Extract metadata from PNG → all properties correct
+- Test: Aspect ratio calculated correctly
+- Test: EXIF orientation handled
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 8: Temp File Manager
 
@@ -321,22 +331,15 @@ data class ImageMetadata(
 - No temp files left on crashes
 - Logging tracks temp operations
 
-**Implementation Notes:**
-```kotlin
-class TempFileManager(private val tempFolder: String) {
-    fun createTempImage(originalName: String): Result<File> {
-        // Generate unique temp filename
-        // Return temp file path
-    }
-    
-    fun cleanup() {
-        // Delete all tracked temp files
-        // Log results
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/TempFileManagerTest.kt`
+- Test: Create temp file → has unique name
+- Test: Multiple temp files → all tracked
+- Test: Cleanup removes all temp files
+- Test: No temp files left after cleanup
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 9: Error Recovery for Corrupted Images
 
@@ -354,6 +357,13 @@ class TempFileManager(private val tempFolder: String) {
 - Errors logged with file path
 - Processing completes with partial results
 - Summary report shows what failed
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/ErrorRecoveryTest.kt`
+- Test: Corrupted image in batch → skipped with error log
+- Test: Processing continues after corrupted image
+- Test: Summary report generated accurately
+- Run: `./gradlew test` — all tests must pass
 
 **Implementation Notes:**
 - Wrap each image operation in try-catch
@@ -379,17 +389,14 @@ class TempFileManager(private val tempFolder: String) {
 - Handles variable processing speeds
 - Works with both fast and slow operations
 
-**Implementation Notes:**
-```kotlin
-class ProgressReporter {
-    fun report(current: Int, total: Int, phase: String) {
-        val percent = (current * 100) / total
-        logger.info("$phase: $current/$total ($percent%)")
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/image/ProgressReporterTest.kt`
+- Test: Progress meter updates correctly
+- Test: ETA calculation reasonable
+- Test: Different phases report correctly
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Integration Points
 

@@ -2,7 +2,7 @@
 
 **Duration:** ~5-7 days  
 **Effort:** 40-50 person-hours  
-**Tasks:** 8 major deliverables  
+**Tasks:** 8 major deliverables (each includes tests)  
 **Status:** Ready to execute
 
 ---
@@ -10,6 +10,12 @@
 ## Overview
 
 Phase 1 establishes the project foundation: build configuration, project structure, core domain models, and essential infrastructure. This phase has no external dependencies and must complete before PHASE 2 and PHASE 3 can begin.
+
+**Testing Strategy (PHASE 1):**
+- Each task includes unit tests written alongside code
+- Tests executed and fixed immediately as code is written
+- Focus on module interfaces and basic contracts (not comprehensive coverage)
+- By phase end: Foundation modules are tested and stable
 
 **Critical Success Factor:** Complete this phase fully before moving to PHASE 2 or PHASE 3. A solid foundation prevents rework later.
 
@@ -31,6 +37,12 @@ Phase 1 establishes the project foundation: build configuration, project structu
 - `./gradlew test` runs without errors (even if no tests exist yet)
 - `./gradlew ktlint` checks code style
 - All dependencies resolve correctly
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/BuildConfigTest.kt`
+- Test: Gradle can build and run tests
+- Test: Kotlin version is correct
+- Test: Test framework can execute a simple test
 
 **Implementation Notes:**
 - Use Kotlin 1.9.x or later
@@ -241,6 +253,14 @@ wallpaper-qualifier --version
 - Defaults applied for optional fields
 - Paths verified (folders exist or can be created)
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/config/ConfigParserTest.kt` (Kotest FunSpec)
+- Test: Valid config parses correctly
+- Test: Invalid JSON rejected with clear error
+- Test: Missing required fields detected
+- Test: Optional fields use defaults
+- Run: `./gradlew test` — all tests must pass
+
 **Implementation Notes:**
 - Use `kotlinx-serialization-json`
 - Implement custom deserialization for validation
@@ -293,6 +313,14 @@ wallpaper-qualifier --version
 - Stack traces available in DEBUG mode
 - CLI displays user-friendly error messages
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/utils/ResultTest.kt`
+- Test: Success case works correctly
+- Test: Failure case works correctly
+- Test: Extension functions (getOrNull, getOrThrow) work
+- Test: Error messages are clear and actionable
+- Run: `./gradlew test` — all tests must pass
+
 **Implementation Notes:**
 - Use sealed classes for type-safe error handling
 - Provide `.getOrNull()` and `.getOrThrow()` extensions
@@ -302,19 +330,26 @@ wallpaper-qualifier --version
 
 ## Task 8: Basic Test Framework Setup
 
-**Objective:** Configure testing infrastructure
+**Objective:** Verify testing infrastructure is ready
 
 **Deliverables:**
-- Test directory structure created
+- Kotest and JUnit 5 properly configured
 - Sample test file demonstrating setup
-- Test runner executable
-- CI/CD placeholder (can be empty for now)
+- Test runner working with parallel execution
+- Test discovery automatic
 
 **Success Criteria:**
 - `./gradlew test` runs tests successfully
+- All tests from earlier tasks pass
 - Test discovery works automatically
 - Tests can be run individually
-- Test output is clear
+- Test output is clear and actionable
+
+**Tests for This Task:**
+- Tests created in Tasks 1, 5, and 7 should all pass
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/SanityTest.kt` as smoke test
+- Test: Basic test framework functions correctly
+- Run: `./gradlew test` — all tests (including prior tasks) must pass
 
 **Implementation Notes:**
 - Use Kotlin Test framework

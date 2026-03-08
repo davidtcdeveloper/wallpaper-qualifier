@@ -2,7 +2,7 @@
 
 **Duration:** ~10-12 days  
 **Effort:** 75-100 person-hours  
-**Tasks:** 11 major deliverables  
+**Tasks:** 11 major deliverables (each includes tests)  
 **Status:** Ready to execute after PHASE 2 & 3
 
 **Dependency:** PHASE 1, PHASE 2, and PHASE 3 must be complete
@@ -12,6 +12,13 @@
 ## Overview
 
 Phase 4 implements the core business logic: sample analysis workflow, profile generation, candidate evaluation, and curation. This phase orchestrates PHASE 2 (image processing) and PHASE 3 (LLM integration) into the complete application workflow.
+
+**Testing Strategy (PHASE 4):**
+- Each task includes unit and integration tests written alongside code
+- Use FakeLLMClient and mock image loader for tests
+- Tests executed and fixed immediately as code is written
+- Focus on workflow orchestration, profile accuracy, and file safety
+- By phase end: Complete workflows tested end-to-end before PHASE 5
 
 **Critical Success Factors:**
 1. Workflows correctly orchestrate image and LLM components
@@ -53,25 +60,15 @@ Phase 4 implements the core business logic: sample analysis workflow, profile ge
 - Partial results preserved if interrupted
 - State can be checkpointed and resumed
 
-**Implementation Notes:**
-```kotlin
-class SampleAnalysisWorkflow(
-    private val imageLoader: ImageLoader,
-    private val imageConverter: ImageConverter,
-    private val llmQueue: LLMRequestQueue,
-    private val responseParser: ResponseParser
-) {
-    suspend fun analyze(sampleFolderPath: String): Result<List<ImageCharacteristics>> {
-        // Load images
-        // Convert each to JPEG/PNG
-        // Send to LLM sequentially
-        // Collect characteristics
-        // Return results
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/SampleAnalysisWorkflowTest.kt`
+- Test: Sample images are discovered and loaded
+- Test: Each image is sent to LLM for analysis
+- Test: Characteristics extracted from responses
+- Test: Progress tracking works correctly
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 2: Image Characteristic Extraction
 
@@ -89,6 +86,13 @@ class SampleAnalysisWorkflow(
 - Validation catches malformed responses
 - Format consistent across samples
 - Searchable and aggregatable
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/CharacteristicExtractionTest.kt`
+- Test: Valid LLM response extracted correctly
+- Test: Malformed response caught and error returned
+- Test: Format consistent across different responses
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -134,24 +138,15 @@ For Quality:
 - Can be reviewed and edited manually
 - Serializes to JSON correctly
 
-**Implementation Notes:**
-```kotlin
-class ProfileGenerator {
-    fun generateProfile(
-        characteristics: List<ImageCharacteristics>
-    ): QualityProfile {
-        return QualityProfile(
-            preferredColorPalettes = aggregateColors(characteristics),
-            preferredStyles = aggregateStyles(characteristics),
-            // ... etc
-            sampleCount = characteristics.size,
-            generatedAt = System.currentTimeMillis()
-        )
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/profile/ProfileGeneratorTest.kt`
+- Test: Profile generated from sample characteristics
+- Test: Color palette aggregation works correctly
+- Test: Style aggregation accurate
+- Test: Quality scores calculated correctly
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 4: Quality Profile Serialization and Storage
 
@@ -188,6 +183,13 @@ class ProfileGenerator {
 - JSON valid and parseable
 - Profile can be reloaded and reused
 - Version compatibility checking
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/profile/ProfileSerializationTest.kt`
+- Test: Profile serialized to JSON correctly
+- Test: JSON can be parsed back to profile
+- Test: Human-readable format verified
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -226,6 +228,14 @@ class ProfileGenerator {
 - Summary statistics calculated
 - Partial results preserved if interrupted
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/CandidateEvaluationWorkflowTest.kt`
+- Test: Candidate images are discovered and loaded
+- Test: Each image is evaluated with LLM
+- Test: Results include confidence scores
+- Test: Summary statistics calculated correctly
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 6: Evaluation Scoring and Qualification Logic
@@ -253,6 +263,14 @@ For each candidate:
 - Confidence scores correlate with quality
 - Threshold configurable
 - Reasoning helps user understand decisions
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/EvaluationScoringTest.kt`
+- Test: High-confidence matches scored correctly
+- Test: Low-confidence mismatches scored correctly
+- Test: Threshold logic applied properly
+- Test: Reasoning captured and retrievable
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -290,23 +308,16 @@ For each qualified image:
 - Atomic operations (no partial files)
 - Summary report shows results
 
-**Implementation Notes:**
-```kotlin
-class CurationWorkflow(
-    private val outputFolder: String,
-    private val logger: Logger
-) {
-    suspend fun curateImages(
-        evaluationResults: List<EvaluationResult>
-    ): Result<CurationSummary> {
-        // Filter qualified images
-        // Copy each to output folder atomically
-        // Return summary
-    }
-}
-```
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/CurationWorkflowTest.kt`
+- Test: Qualified image copied to output folder
+- Test: Original format preserved
+- Test: Copy is atomic (no partial files)
+- Test: Failures in one copy don't stop others
+- Test: Summary report generated accurately
+- Run: `./gradlew test` — all tests must pass
 
----
+**Implementation Notes:**
 
 ## Task 8: Duplicate Detection in Output Folder
 
@@ -329,6 +340,13 @@ class CurationWorkflow(
 - No unintended overwrites
 - User informed of duplicates skipped
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/DuplicateDetectionTest.kt`
+- Test: Identical files detected as duplicates
+- Test: Duplicate skipped without overwrite
+- Test: User is notified of skipped duplicates
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 9: Atomic File Operations for Safety
@@ -342,21 +360,14 @@ class CurationWorkflow(
 - Error logging if operations fail
 
 **Implementation Pattern:**
-```kotlin
-class AtomicFileOps {
-    fun atomicCopy(sourceFile: File, destFile: File): Result<Unit> {
-        val tempFile = File(destFile.parentFile, "${destFile.name}.tmp")
-        return try {
-            sourceFile.copyTo(tempFile, overwrite = false)
-            tempFile.renameTo(destFile)
-            Success(Unit)
-        } catch (e: Exception) {
-            tempFile.deleteIfExists()
-            Failure(FileIOException("Atomic copy failed: ${e.message}"))
-        }
-    }
-}
-```
+(Remove pseudo-code here)
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/AtomicFileOpsTest.kt`
+- Test: Atomic copy succeeds with file in destination
+- Test: Temp file deleted if copy fails
+- Test: No partial files left on failure
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -389,6 +400,14 @@ class AtomicFileOps {
 - Resume from checkpoint works
 - No duplicate processing if resumed
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/CheckpointingTest.kt`
+- Test: Checkpoint saved after batch
+- Test: Checkpoint can be loaded
+- Test: Workflow resumes from checkpoint correctly
+- Test: No duplicate processing on resume
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 11: Error Recovery and Partial Result Preservation
@@ -416,6 +435,14 @@ During workflow:
 - Partial results usable
 - Errors clearly reported to user
 - Error log available for debugging
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/workflow/ErrorRecoveryTest.kt`
+- Test: Error in one image doesn't crash workflow
+- Test: Partial results preserved on error
+- Test: Error summary generated correctly
+- Test: Error log written with details
+- Run: `./gradlew test` — all tests must pass
 
 ---
 

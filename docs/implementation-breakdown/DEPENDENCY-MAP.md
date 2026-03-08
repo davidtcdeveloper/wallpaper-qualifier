@@ -217,6 +217,37 @@ Must wait for PHASE 4 complete, but testing tasks can run in parallel.
 
 ---
 
+## Test-Driven Development (TDD) Integration
+
+**New in Updated Plan:** Each PHASE 1-4 task includes test generation and execution.
+
+### Testing Strategy Changes:
+
+| Aspect | Before (Test-at-End) | After (TDD) |
+|--------|----------------------|------------|
+| **When tests written** | PHASE 5 (after code) | During PHASE 1-4 (with code) |
+| **Test execution** | Once at end | Immediate (per task) |
+| **Bugs fixed** | In PHASE 5 | Immediately during implementation |
+| **PHASE 5 focus** | Unit + integration tests | E2E, performance, documentation |
+| **Risk** | High (bugs found late) | Low (caught early) |
+| **Code quality** | Potentially lower | Higher (tested as written) |
+
+### TDD Impact on Timeline:
+
+- **PHASE 1-4 Tests Written:** ~15-20% per phase (added to implementation time)
+- **PHASE 5 Reduction:** Testing time drops significantly (tests already exist)
+- **Overall Impact:** Neutral timeline, higher quality (tests parallelize with coding)
+
+### TDD Success Criteria by Phase:
+
+**PHASE 1:** Build config works, test framework runs, all foundation tests pass  
+**PHASE 2:** Image pipeline tested, format support verified, 80+ tests  
+**PHASE 3:** LLM integration tested, sequential constraint verified, 50+ tests  
+**PHASE 4:** Workflows tested E2E, profiles accurate, 70+ tests  
+**PHASE 5:** All tests pass, coverage >80%, E2E workflows validated
+
+---
+
 ## Optimization Strategies
 
 ### Reduce PHASE 2 Critical Path

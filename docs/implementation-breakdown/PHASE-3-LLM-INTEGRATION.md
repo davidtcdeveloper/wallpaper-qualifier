@@ -2,7 +2,7 @@
 
 **Duration:** ~6-8 days  
 **Effort:** 45-60 person-hours  
-**Tasks:** 7 major deliverables  
+**Tasks:** 7 major deliverables (each includes tests)  
 **Status:** Ready to execute after PHASE 1
 
 **Dependency:** PHASE 1 must be complete
@@ -12,6 +12,13 @@
 ## Overview
 
 Phase 3 implements LLM integration leveraging **Kotlin Koog framework as the primary integration layer**, with minimal custom code required. The strategy prioritizes using Koog's built-in LLM client capabilities, extensible executor/transport pattern, agent framework, and multimodal support to handle LMStudio integration efficiently.
+
+**Testing Strategy (PHASE 3):**
+- Each task includes unit tests written alongside code
+- Use FakeLLMClient (simulated LLM) and mock Koog executor for tests
+- Tests executed and fixed immediately as code is written
+- Focus on request queueing, sequential processing, multimodal support
+- By phase end: LLM integration fully tested and stable
 
 **Koog-First Philosophy:**
 - Maximize use of Koog's features (agents, request management, error handling, streaming)
@@ -186,6 +193,13 @@ Custom handles:
 - [ ] Identified Koog limitations and mitigation strategies
 - [ ] Effort estimate for Tasks 2-7 based on chosen approach
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/KoogIntegrationTest.kt`
+- Test: Koog agent can be instantiated with LMStudio config
+- Test: Mock LLM response can be configured
+- Test: Sequential request processing verified
+- Run: `./gradlew test` — all tests must pass
+
 **Estimated Effort:** 2-3 days (research + design + multiple PoCs)
 
 **Key Questions to Answer:**
@@ -242,6 +256,13 @@ val agent = AIAgent(
 - System prompts set correctly
 - Agent ready for use in Tasks 3-5
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/KoogAgentSetupTest.kt`
+- Test: Agent can be configured with LMStudio endpoint
+- Test: System prompt can be set and retrieved
+- Test: Agent initialization succeeds
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 3: Koog Multimodal Image Handling
@@ -287,6 +308,13 @@ suspend fun analyzeImageWithKoog(
 - Image formats (JPEG, PNG) supported
 - Performance acceptable
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/MultimodalHandlingTest.kt`
+- Test: Multimodal message can be constructed (text + image)
+- Test: Image encoding (Base64) works correctly
+- Test: Mock multimodal response is parsed
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 4: Request Sequential Processing with Koog
@@ -323,6 +351,14 @@ val agent = AIAgent(
 - Requests processed in order (FIFO)
 - No race conditions or parallel sends
 - Timeouts handled gracefully
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/SequentialProcessingTest.kt`
+- Test: Multiple requests processed sequentially
+- Test: Requests maintain order (FIFO)
+- Test: No concurrent requests in flight
+- Test: Timeout handling works correctly
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -388,6 +424,14 @@ Return JSON:
 - JSON responses parse cleanly
 - Versioning allows reproducibility
 
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/PromptTemplateTest.kt`
+- Test: Analysis prompt template renders correctly
+- Test: Evaluation prompt template renders correctly
+- Test: Variable substitution works
+- Test: Template versioning system works
+- Run: `./gradlew test` — all tests must pass
+
 ---
 
 ## Task 6: Response Parsing and Validation with Koog
@@ -433,6 +477,14 @@ class KoogResponseParser {
 - Missing fields handled gracefully
 - Domain objects created correctly
 - Type safety maintained
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/ResponseParsingTest.kt`
+- Test: Analysis response parsed correctly
+- Test: Evaluation response parsed correctly
+- Test: Malformed response caught and error returned
+- Test: Missing fields handled gracefully
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
@@ -495,6 +547,14 @@ suspend fun callKoogAgent(message: Message): Result<String> {
 - Retries happen transparently
 - Timeouts handled without hanging
 - Failed requests don't cascade
+
+**Tests for This Task:**
+- Create `src/commonTest/kotlin/com/wallpaperqualifier/llm/ErrorHandlingTest.kt`
+- Test: Network error detected and handled gracefully
+- Test: Timeout detected and appropriate message shown
+- Test: Invalid response detected and logged
+- Test: Retry logic works (if implemented)
+- Run: `./gradlew test` — all tests must pass
 
 ---
 
