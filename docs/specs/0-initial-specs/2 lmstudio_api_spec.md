@@ -3,19 +3,35 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Base URL and Authentication](#base-url-and-authentication)
-3. [Endpoints](#endpoints)
+2. [Wallpaper Qualifier integration decisions](#wallpaper-qualifier-integration-decisions)
+3. [Base URL and Authentication](#base-url-and-authentication)
+4. [Endpoints](#endpoints)
    - [Chat Completion](#chat-completion)
    - [Image Upload and Multimodal Prompts](#image-upload-and-multimodal-prompts)
-4. [Request Format](#request-format)
-5. [Response Format](#response-format)
-6. [Error Handling](#error-handling)
-7. [Examples](#examples)
+5. [Request Format](#request-format)
+6. [Response Format](#response-format)
+7. [Error Handling](#error-handling)
+8. [Examples](#examples)
 
 ---
 
 ## Introduction
 LMStudio provides a RESTful API for interacting with locally loaded Large Language Models (LLMs). This API supports both text and image inputs, enabling multimodal interactions. The API is designed to be OpenAI-compatible, with additional LMStudio-specific features.
+
+---
+
+## Wallpaper Qualifier integration decisions
+
+For the Wallpaper Qualifier CLI, the following approaches are considered. The **Selected approach** column records the decision for this project.
+
+| **Area**                | **Suggested approaches**                                                                 | **Selected approach** |
+| ----------------------- | ---------------------------------------------------------------------------------------- | --------------------- |
+| **Platform**            | macOS 13+, macOS 26+                                                                     | **macOS 26+**         |
+| **Framework**           | Kotlin Koog, Skiko, native macOS APIs, JVM libraries                                      | **Kotlin Koog**       |
+| **Image processing**    | Kotlin Koog, Skiko, native APIs, Apache Commons Imaging, TwelveMonkeys                    | **Kotlin Koog**       |
+| **LLM provider**        | OpenAI GPT-4 Vision, Anthropic Claude 3, Google Gemini Vision, any provider supported by Koog | **User choice (any supported by Koog)**; no specific recommendation |
+| **Retry policy**        | 3 retries with exponential backoff, no retries                                           | **No retry strategy** |
+| **Performance targets** | <5s per image, 100 images in <10 minutes; none for first version                         | **None for first version** |
 
 ---
 
