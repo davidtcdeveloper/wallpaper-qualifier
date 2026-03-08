@@ -79,8 +79,9 @@ wallpaper-qualifier/
 - kotlinx.coroutines (concurrency)
 
 **Testing:**
-- Kotlin Test framework
-- JUnit 5
+- Kotest (framework & assertions)
+- Fakes (preferred for internal interfaces)
+- MockK (reserved for external/final dependencies)
 
 **External Services:**
 - LMStudio API (local LLM service)

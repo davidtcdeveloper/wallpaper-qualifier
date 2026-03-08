@@ -6,7 +6,54 @@ You write tests that are THOROUGH and CLEAR. Your tests DOCUMENT behavior. You t
 
 ## Overview
 
-The Wallpaper Qualifier prioritized **Integration Testing** over the traditional test pyramid. We focus on validating complete paths across multiple classes and ensuring that module interfaces meet their contracts. This allows internal implementation details to evolve without breaking the test suite.
+The Wallpaper Qualifier prioritizes **Integration Testing** using the **Kotest** framework. We focus on validating complete paths across multiple classes and ensuring that module interfaces meet their contracts. This allows internal implementation details to evolve without breaking the test suite.
+
+---
+
+## Testing Framework & Style
+
+<rule_0 priority="HIGHEST">
+**KOTEST & BEHAVIOR SPECS**: Use Kotest for expressive, readable tests.
+- Prefer **FunSpec** or **StringSpec** for clear test descriptions.
+- Use Kotest assertions (`shouldBe`, `shouldNotBe`, `shouldThrow`) for readable checks.
+- Avoid JUnit annotations (`@Test`) or assertions (`assertEquals`).
+
+**MUST**:
+- ✓ Write tests using Kotest DSL (`test("should do something") { ... }`).
+- ✓ Use `io.kotest.matchers` for assertions.
+- ✓ Use `io.kotest.assertions.throwables` for exception testing.
+
+**Example - Good**:
+```kotlin
+class ImageModuleE2ETest : FunSpec({
+    test("should process a batch of sample images from disk") {
+        val processor = ImageModule.create()
+        val testFiles = createTestImageFiles("samples")
+        
+        val results = processor.processBatch(testFiles.map { it.path })
+        
+        // Fluent assertions
+        results.filterIsInstance<Success>().size shouldBe testFiles.size
+        
+        results.forEach { result ->
+            File(result.outputPath).exists() shouldBe true
+            ImageDecoder.verifyFormat(result.outputPath, ImageFormat.PNG) shouldBe true
+        }
+    }
+})
+```
+
+**Example - Avoid**:
+```kotlin
+// Anti-pattern: JUnit style
+class ImageModuleTest {
+    @Test
+    fun testProcessing() {
+        assertEquals(5, result.size) // Less readable
+    }
+}
+```
+</rule_0>
 
 ---
 
@@ -27,28 +74,8 @@ The Wallpaper Qualifier prioritized **Integration Testing** over the traditional
 
 **Example - Good**:
 ```kotlin
-// Module E2E Test: Tests the entire image pipeline path
-class ImageModuleE2ETest {
-    @Test
-    suspend fun shouldProcessSampleBatchFromDisk() {
-        val processor = ImageModule.create() // Real implementation
-        val testFiles = createTestImageFiles("samples")
-        
-        val results = processor.processBatch(testFiles.map { it.path })
-        
-        // Validates the entire path: Detection -> Decoding -> Optimization -> Encoding
-        assertEquals(testFiles.size, results.filterIsInstance<Success>().size)
-        results.forEach { result ->
-            assertTrue(File(result.outputPath).exists())
-            assertTrue(ImageDecoder.verifyFormat(result.outputPath, ImageFormat.PNG))
-        }
-    }
-}
-
-// Integration Test: Cross-module workflow
-class WorkflowIntegrationTest {
-    @Test
-    suspend fun shouldAnalyzeSamplesAndGenerateProfile() {
+class WorkflowIntegrationTest : StringSpec({
+    "should analyze samples and generate a profile" {
         val mockLLM = MockLLMClient()
         val workflow = WorkflowOrchestrator(
             imageModule = ImageModule.create(),
@@ -58,28 +85,10 @@ class WorkflowIntegrationTest {
         
         val result = workflow.runSampleAnalysis(testConfig)
         
-        // Validates that the modules work together across the full analysis path
-        assertIs<ProfileResult.Success>(result)
-        assertNotNull(result.profile.aesthetics)
+        result.shouldBeInstanceOf<ProfileResult.Success>()
+        result.profile.aesthetics.shouldNotBeNull()
     }
-}
-```
-
-**Example - Avoid**:
-```kotlin
-// Anti-pattern: Over-mocking internal helpers
-class ImageProcessorTest {
-    @Test
-    fun testInternalHelper() {
-        val mockDecoder = mock<InternalDecoder>()
-        val mockOptimizer = mock<InternalOptimizer>()
-        val processor = ImageProcessor(mockDecoder, mockOptimizer)
-        
-        processor.doWork()
-        
-        verify(mockDecoder).call() // Brittle: breaks if internal structure changes
-    }
-}
+})
 ```
 </rule_1>
 
@@ -89,53 +98,77 @@ class ImageProcessorTest {
 **HAPPY PATH + ERROR CASES**: Test success and failure paths across the entire module.
 - Happy path: Successful completion of a multi-step workflow.
 - Error cases: How the module interface handles failures in internal steps (missing files, LLM timeouts).
-- Edge cases: Empty inputs, massive batches, boundary value thresholds.
 
 **MUST**:
 - ✓ Ensure tests cover the "Surface Area" of the module.
 - ✓ Verify that errors from deep within a path are correctly propagated to the module interface.
-- ✓ Use descriptive names that reflect the business scenario.
 
 **Example - Good**:
 ```kotlin
-class ConfigModuleIntegrationTest {
-    @Test
-    fun shouldReturnAggregatedErrorsForInvalidJSON() {
+class ConfigModuleIntegrationTest : FunSpec({
+    test("should return aggregated errors for invalid JSON") {
         val invalidJson = "{ \"llm\": { \"timeout\": -1 } }"
         val result = ConfigLoader.loadContent(invalidJson)
         
-        // Tests the path from raw string parsing through validation
-        assertIs<ConfigResult.Failure>(result)
-        assertTrue(result.errors.any { it.contains("timeout") })
+        result.shouldBeInstanceOf<ConfigResult.Failure>()
+        result.errors.forAny { it shouldContain "timeout" }
     }
-}
+})
 ```
 </rule_2>
 
 ---
 
-<rule_3 priority="HIGH">
-**MOCKING EXTERNAL SERVICES**: Mock only at the absolute system boundary (the LLM).
-- The LLM Client is an external dependency and should be mocked to ensure determinism.
-- Use mocks to simulate network failures, rate limits, and malformed LLM responses.
+## Mocking vs. Faking
+
+<rule_3 priority="HIGHEST">
+**FAKES OVER MOCKS**: Prefer hand-written Fakes for internal interfaces.
+- Use **Fakes** (real, simplified implementations) for internal module boundaries.
+- Use **MockK** *only* for external libraries, final classes, or objects that cannot be interfaced/faked.
+- Fakes ensure that tests exercise realistic state transitions and are less brittle than behavior-based mocks.
 
 **MUST**:
-- ✓ Inject the LLM client into the LLM Module.
-- ✓ Mock success, timeout, and API error scenarios.
-- ✓ Ensure the LLM Module interface handles these mocks correctly.
+- ✓ Define an interface for internal services and provide a `FakeService` for tests.
+- ✓ Use `MockK` only for system/library boundaries (e.g., Ktor HttpClient, macOS system APIs).
+- ✓ Ensure Fakes maintain internal state consistency (e.g., a `FakeLLMQueue` should actually queue items).
 
-**Example - Good**:
+**Example - Good (Fake)**:
 ```kotlin
-@Test
-suspend fun llmModuleShouldHandleTimeoutGracefully() {
-    val mockApi = MockLLMApi()
-    mockApi.delayResponse(5000) // Trigger timeout
-    
-    val module = LLMModule.create(mockApi, timeout = 1000)
-    val result = module.analyze(testImage)
-    
-    assertIs<LLMResult.Error.Timeout>(result)
+// Interface in commonMain
+interface LLMClient {
+    suspend fun analyze(request: Request): Response
 }
+
+// Fake in commonTest
+class FakeLLMClient : LLMClient {
+    private val responses = mutableListOf<Response>()
+    val recordedRequests = mutableListOf<Request>()
+
+    fun addResponse(response: Response) { responses.add(response) }
+
+    override suspend fun analyze(request: Request): Response {
+        recordedRequests.add(request)
+        return responses.removeFirstOrNull() ?: throw IllegalStateException("No responses left")
+    }
+}
+
+// Usage in Test
+test("should analyze images through the module path") {
+    val fakeLlm = FakeLLMClient()
+    fakeLlm.addResponse(AnalysisResponse(score = 0.9f))
+    
+    val module = LLMModule.create(fakeLlm)
+    module.analyze(testImage)
+    
+    fakeLlm.recordedRequests.size shouldBe 1
+}
+```
+
+**Example - Avoid (Over-mocking)**:
+```kotlin
+// Anti-pattern: Mocking internal logic with MockK
+val mockProcessor = mockk<InternalProcessor>()
+coEvery { mockProcessor.process(any()) } returns Success() // Brittle behavior mocking
 ```
 </rule_3>
 
@@ -147,14 +180,12 @@ suspend fun llmModuleShouldHandleTimeoutGracefully() {
 - Test that the sequential LLM queue remains sequential even when bombarded with parallel requests.
 
 **MUST**:
-- ✓ Use `runTest` for coroutine lifecycle management.
+- ✓ Use Kotest's coroutine support (enabled by default in recent versions).
 - ✓ Validate the *order* of operations in the LLM queue.
-- ✓ Validate the *throughput* of the Image module to confirm parallelism.
 
 **Example - Good**:
 ```kotlin
-@Test
-fun llmQueueMustMaintainOrder() = runTest {
+test("LLM queue must maintain order under load") {
     val mockLlm = RecordingMockLLM()
     val queue = LLMRequestQueue(mockLlm)
     
@@ -165,7 +196,7 @@ fun llmQueueMustMaintainOrder() = runTest {
     jobs.joinAll()
     
     // Verify results processed sequentially and in received order
-    assertEquals(listOf("Request 1", "Request 2", "Request 3", "Request 4", "Request 5"), mockLlm.received)
+    mockLlm.received shouldBe listOf("Request 1", "Request 2", "Request 3", "Request 4", "Request 5")
 }
 ```
 </rule_4>
@@ -175,10 +206,9 @@ fun llmQueueMustMaintainOrder() = runTest {
 <rule_5 priority="MEDIUM">
 **TEST DATA & FIXTURES**: Use realistic test data to exercise real paths.
 - Maintain a set of "Golden Master" images for testing.
-- Use builders to create complex state without exposing internal fields.
+- Use Kotest's `tempdir()` or `tempfile()` extensions.
 
 **MUST**:
-- ✓ Use `createTempDir()` for file-based tests.
-- ✓ Provide clear cleanup logic.
-- ✓ Keep test resources (images) small enough for quick execution but representative.
+- ✓ Use Kotest's lifecycle listeners (beforeTest, afterTest) if manual cleanup is needed.
+- ✓ Prefer `tempdir()` fixture which auto-cleans.
 ```
