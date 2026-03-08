@@ -6,109 +6,78 @@ You write tests that are THOROUGH and CLEAR. Your tests DOCUMENT behavior. You t
 
 ## Overview
 
-The Wallpaper Qualifier must be testable and well-tested. This document covers testing strategies, mocking patterns, and concurrency-specific concerns.
+The Wallpaper Qualifier prioritized **Integration Testing** over the traditional test pyramid. We focus on validating complete paths across multiple classes and ensuring that module interfaces meet their contracts. This allows internal implementation details to evolve without breaking the test suite.
 
 ---
 
 ## Testing Strategy
 
 <rule_1 priority="HIGHEST">
-**TEST PYRAMID**: Focus test effort where it matters most.
-- **Unit Tests** (60%): Individual functions/classes in isolation
-- **Integration Tests** (30%): Module interactions (config + workflow)
-- **End-to-End Tests** (10%): Full workflow with mock LLM
-
-This prevents test bloat while ensuring coverage of critical paths.
+**INTEGRATION-FIRST APPROACH**: Focus on the interaction between components.
+- **Module E2E Tests** (70%): Validate the entire package/module interface (e.g., full Image Module pipeline).
+- **System Integration** (20%): Cross-module workflows (e.g., Config loading → Image processing).
+- **Critical Unit Tests** (10%): Reserved only for complex pure logic (e.g., math-heavy score calculations).
 
 **MUST**:
-- ✓ Unit tests: Fast (<50ms), many (100+)
-- ✓ Integration tests: Medium speed (<500ms), moderate count (20+)
-- ✓ E2E tests: Slower but comprehensive (5+)
-- ✓ Mock external services (LLM)
-- ✓ Use real file I/O in integration tests
+- ✓ Test paths across multiple classes to ensure structural integrity.
+- ✓ Validate module boundaries: if you call `ImageModule.process()`, it should work regardless of internal helper classes.
+- ✓ Use real file I/O for integration tests where practical.
+- ✓ Mock only external boundary services (like the LLM API).
+- ✓ Focus on "What" the module does, not "How" it does it.
 
 **Example - Good**:
 ```kotlin
-// Unit Test: Fast, focused
-class ImageOptimizerTest {
+// Module E2E Test: Tests the entire image pipeline path
+class ImageModuleE2ETest {
     @Test
-    fun shouldCompressJpegBelowTargetSize() {
-        val optimizer = ImageOptimizer()
-        val image = createTestImage(width = 4000, height = 3000)
+    suspend fun shouldProcessSampleBatchFromDisk() {
+        val processor = ImageModule.create() // Real implementation
+        val testFiles = createTestImageFiles("samples")
         
-        val result = optimizer.optimizeToJpeg(image, maxFileSize = 2_097_152)
+        val results = processor.processBatch(testFiles.map { it.path })
         
-        assertTrue(result.sizeBytes < 2_097_152)
-        assertTrue(result.qualityScore > 0.85) // Not too aggressive
-    }
-    
-    @Test
-    fun shouldPreservePrimaryColorsAfterOptimization() {
-        val optimizer = ImageOptimizer()
-        val colors = listOf(0xFF0000, 0x00FF00, 0x0000FF) // R, G, B
-        val image = createTestImage(dominantColors = colors)
-        
-        val result = optimizer.optimizeToJpeg(image, maxFileSize = 2_097_152)
-        
-        assertTrue(result.dominantColors.size >= 3)
-        // Colors preserved
+        // Validates the entire path: Detection -> Decoding -> Optimization -> Encoding
+        assertEquals(testFiles.size, results.filterIsInstance<Success>().size)
+        results.forEach { result ->
+            assertTrue(File(result.outputPath).exists())
+            assertTrue(ImageDecoder.verifyFormat(result.outputPath, ImageFormat.PNG))
+        }
     }
 }
 
-// Integration Test: Tests config + processing interaction
-class ConfiguredImageProcessingTest {
+// Integration Test: Cross-module workflow
+class WorkflowIntegrationTest {
     @Test
-    suspend fun shouldProcessBatchAccordingToConfig() {
-        val config = Config(
-            folders = FoldersConfig(
-                samples = testSamplesDir,
-                candidates = testCandidatesDir,
-                output = testOutputDir
-            ),
-            processing = ProcessingConfig(
-                maxParallelTasks = 2,
-                outputFormat = ImageFormat.PNG
-            )
-        )
-        
-        val processor = ImageProcessor(config)
-        val results = processor.processBatch(listOf(image1, image2))
-        
-        assertEquals(2, results.size)
-        results.forEach { assertTrue(it.path.endsWith(".png")) }
-    }
-}
-
-// E2E Test: Full workflow
-class WallpaperQualifierE2ETest {
-    @Test
-    suspend fun shouldRunCompleteWorkflow() {
+    suspend fun shouldAnalyzeSamplesAndGenerateProfile() {
         val mockLLM = MockLLMClient()
-        mockLLM.respondWith(testAnalyses)
-        
-        val qualifier = WallpaperQualifier(
-            configLoader = DefaultConfigLoader(),
-            llmClient = mockLLM,
-            imageProcessor = DefaultImageProcessor()
+        val workflow = WorkflowOrchestrator(
+            imageModule = ImageModule.create(),
+            llmModule = LLMModule.create(mockLLM),
+            profileModule = ProfileModule.create()
         )
         
-        val result = qualifier.run(testConfigPath)
+        val result = workflow.runSampleAnalysis(testConfig)
         
-        assertEquals(Result.Success, result)
-        assertEquals(3, result.qualified)
+        // Validates that the modules work together across the full analysis path
+        assertIs<ProfileResult.Success>(result)
+        assertNotNull(result.profile.aesthetics)
     }
 }
 ```
 
 **Example - Avoid**:
 ```kotlin
-// Anti-pattern: All integration tests (slow, brittle)
-class WallpaperQualifierTest {
+// Anti-pattern: Over-mocking internal helpers
+class ImageProcessorTest {
     @Test
-    suspend fun testEverythingWithRealLLM() {
-        // Calls actual LMStudio, takes 5 minutes
-        // Flaky: network issues cause failure
-        // Too broad: can't isolate the problem
+    fun testInternalHelper() {
+        val mockDecoder = mock<InternalDecoder>()
+        val mockOptimizer = mock<InternalOptimizer>()
+        val processor = ImageProcessor(mockDecoder, mockOptimizer)
+        
+        processor.doWork()
+        
+        verify(mockDecoder).call() // Brittle: breaks if internal structure changes
     }
 }
 ```
@@ -117,79 +86,28 @@ class WallpaperQualifierTest {
 ---
 
 <rule_2 priority="HIGHEST">
-**HAPPY PATH + ERROR CASES**: Test success and failure paths equally.
-- Happy path: normal operation, expected inputs
-- Error cases: invalid input, missing files, LLM failure
-- Edge cases: empty lists, zero values, boundary conditions
+**HAPPY PATH + ERROR CASES**: Test success and failure paths across the entire module.
+- Happy path: Successful completion of a multi-step workflow.
+- Error cases: How the module interface handles failures in internal steps (missing files, LLM timeouts).
+- Edge cases: Empty inputs, massive batches, boundary value thresholds.
 
 **MUST**:
-- ✓ At least one happy path test per function
-- ✓ At least one error case test per error type
-- ✓ Document what error case each test covers
-- ✓ Use descriptive test names (describe the scenario)
+- ✓ Ensure tests cover the "Surface Area" of the module.
+- ✓ Verify that errors from deep within a path are correctly propagated to the module interface.
+- ✓ Use descriptive names that reflect the business scenario.
 
 **Example - Good**:
 ```kotlin
-class ImageDecoderTest {
-    // Happy paths
+class ConfigModuleIntegrationTest {
     @Test
-    suspend fun shouldDecodeValidJpegImage() { /* ... */ }
-    
-    @Test
-    suspend fun shouldDetectMultipleImageFormats() { /* ... */ }
-    
-    // Error cases
-    @Test
-    suspend fun shouldFailGracefullyOnCorruptedImage() {
-        val result = decoder.decode(corruptedImagePath)
-        assertIs<ImageDecodeResult.Failed>(result)
-        assertTrue(result.message.contains("corrupted"))
-    }
-    
-    @Test
-    suspend fun shouldFailOnUnsupportedFormat() {
-        val result = decoder.decode(bitmapImagePath)
-        assertIs<ImageDecodeResult.Failed>(result)
-        assertTrue(result.message.contains("unsupported"))
-    }
-    
-    @Test
-    suspend fun shouldFailOnMissingFile() {
-        val result = decoder.decode(nonexistentPath)
-        assertIs<ImageDecodeResult.Failed>(result)
-        assertTrue(result.message.contains("not found"))
-    }
-    
-    // Edge cases
-    @Test
-    suspend fun shouldHandleEmptyFile() {
-        val emptyFile = File.createTempFile()
-        emptyFile.writeText("")
+    fun shouldReturnAggregatedErrorsForInvalidJSON() {
+        val invalidJson = "{ \"llm\": { \"timeout\": -1 } }"
+        val result = ConfigLoader.loadContent(invalidJson)
         
-        val result = decoder.decode(emptyFile.path)
-        assertIs<ImageDecodeResult.Failed>(result)
+        // Tests the path from raw string parsing through validation
+        assertIs<ConfigResult.Failure>(result)
+        assertTrue(result.errors.any { it.contains("timeout") })
     }
-    
-    @Test
-    suspend fun shouldHandleVeryLargeImage() {
-        val largeImage = createTestImage(width = 10000, height = 8000)
-        
-        val result = decoder.decode(largeImage)
-        assertIs<ImageDecodeResult.Success>(result)
-    }
-}
-```
-
-**Example - Avoid**:
-```kotlin
-// Anti-pattern: Only test happy path
-class ImageDecoderTest {
-    @Test
-    suspend fun shouldDecodeImage() {
-        val result = decoder.decode(validImagePath)
-        assertTrue(result is ImageDecodeResult.Success)
-    }
-    // What about errors? Never tested, breaks in production!
 }
 ```
 </rule_2>
@@ -197,80 +115,26 @@ class ImageDecoderTest {
 ---
 
 <rule_3 priority="HIGH">
-**MOCKING LLM CLIENT**: LLM is external service. Mock it in tests.
-- Deterministic responses (same input → same output)
-- No network calls during tests
-- Test error scenarios (timeout, rate limit)
-- Track request history for verification
+**MOCKING EXTERNAL SERVICES**: Mock only at the absolute system boundary (the LLM).
+- The LLM Client is an external dependency and should be mocked to ensure determinism.
+- Use mocks to simulate network failures, rate limits, and malformed LLM responses.
 
 **MUST**:
-- ✓ Inject LLM client as dependency
-- ✓ Create mock that returns predictable responses
-- ✓ Mock both success and failure scenarios
-- ✓ Verify requests sent (spy pattern)
-- ✓ Never make real HTTP calls in tests
+- ✓ Inject the LLM client into the LLM Module.
+- ✓ Mock success, timeout, and API error scenarios.
+- ✓ Ensure the LLM Module interface handles these mocks correctly.
 
 **Example - Good**:
 ```kotlin
-class MockLLMClient : LLMClient {
-    private val requestHistory = mutableListOf<Request>()
-    private var responseQueue = LinkedList<Response>()
-    
-    fun respondWith(response: Response) {
-        responseQueue.add(response)
-    }
-    
-    fun respondWithError(error: Exception) {
-        responseQueue.add(ErrorResponse(error))
-    }
-    
-    override suspend fun analyze(request: Request): Response {
-        requestHistory.add(request)
-        return responseQueue.poll() ?: throw Exception("No more responses mocked")
-    }
-    
-    fun verifyRequestsSent(expectedCount: Int) {
-        assertEquals(expectedCount, requestHistory.size)
-    }
-    
-    fun getRequestAt(index: Int): Request = requestHistory[index]
-}
-
-// Usage in tests
 @Test
-suspend fun shouldSendAnalysisRequestForEachSample() {
-    val mockLLM = MockLLMClient()
-    mockLLM.respondWith(analysisResponse1)
-    mockLLM.respondWith(analysisResponse2)
+suspend fun llmModuleShouldHandleTimeoutGracefully() {
+    val mockApi = MockLLMApi()
+    mockApi.delayResponse(5000) // Trigger timeout
     
-    val analyzer = SampleAnalyzer(mockLLM)
-    analyzer.analyze(listOf(sample1, sample2))
+    val module = LLMModule.create(mockApi, timeout = 1000)
+    val result = module.analyze(testImage)
     
-    mockLLM.verifyRequestsSent(2)
-    assertTrue(mockLLM.getRequestAt(0).prompt.contains("color"))
-}
-
-@Test
-suspend fun shouldHandleLLMTimeoutGracefully() {
-    val mockLLM = MockLLMClient()
-    mockLLM.respondWithError(TimeoutException("LLM took too long"))
-    
-    val analyzer = SampleAnalyzer(mockLLM)
-    val result = analyzer.analyze(listOf(sample1))
-    
-    assertIs<Result.Failure>(result)
-    assertTrue(result.message.contains("timeout"))
-}
-```
-
-**Example - Avoid**:
-```kotlin
-// Anti-pattern: Real HTTP calls in tests
-@Test
-suspend fun shouldAnalyzeSample() {
-    val analyzer = SampleAnalyzer(RealLLMClient())
-    val result = analyzer.analyze(sample1)
-    // Test takes 30 seconds, flaky, depends on network
+    assertIs<LLMResult.Error.Timeout>(result)
 }
 ```
 </rule_3>
@@ -278,94 +142,30 @@ suspend fun shouldAnalyzeSample() {
 ---
 
 <rule_4 priority="HIGH">
-**TESTING CONCURRENT CODE**: Coroutines add complexity. Test explicitly.
-- Sequential vs. parallel behavior
-- Cancellation handling
-- Timeout behavior
-- Race conditions (use deterministic mocks)
+**CONCURRENCY & PATH VALIDATION**: Ensure parallel paths don't conflict.
+- Test that parallel image processing paths don't have side effects on shared state.
+- Test that the sequential LLM queue remains sequential even when bombarded with parallel requests.
 
 **MUST**:
-- ✓ Use `runTest { }` for coroutine tests (scoped)
-- ✓ Test sequential LLM queue ordering
-- ✓ Test cancellation doesn't leak resources
-- ✓ Test timeout behavior
-- ✓ Use deterministic mocks (no random delays)
+- ✓ Use `runTest` for coroutine lifecycle management.
+- ✓ Validate the *order* of operations in the LLM queue.
+- ✓ Validate the *throughput* of the Image module to confirm parallelism.
 
 **Example - Good**:
 ```kotlin
-class LLMQueueTest {
-    @Test
-    fun shouldProcessRequestsSequentially() = runTest {
-        val mockLLM = RecordingMockLLM()
-        val queue = LLMRequestQueue(mockLLM)
-        
-        // Start queue processor
-        launch {
-            queue.process()
-        }
-        
-        // Enqueue multiple requests
-        queue.enqueue(Request("image1"))
-        queue.enqueue(Request("image2"))
-        queue.enqueue(Request("image3"))
-        
-        // Verify they're processed in order (sequential, not parallel)
-        val order = mockLLM.getProcessingOrder()
-        assertEquals(listOf("image1", "image2", "image3"), order)
-    }
-    
-    @Test
-    fun shouldHandleCancellation() = runTest {
-        val mockLLM = SlowMockLLM() // 1 second per request
-        val queue = LLMRequestQueue(mockLLM)
-        
-        val job = launch {
-            queue.process()
-        }
-        
-        queue.enqueue(Request("image1"))
-        queue.enqueue(Request("image2"))
-        
-        delay(500) // Cancel mid-way
-        job.cancel()
-        
-        assertTrue(queue.isIdleAfterCancellation())
-    }
-}
-
-class ImageProcessorTest {
-    @Test
-    suspend fun shouldProcessImagesInParallel() {
-        val processor = ImageProcessor(maxParallel = 4)
-        val images = (1..10).map { createTestImage(id = it) }
-        
-        val startTime = System.currentTimeMillis()
-        processor.process(images)
-        val duration = System.currentTimeMillis() - startTime
-        
-        // 10 images with 4 parallel = 3 batches
-        // If sequential: ~3 seconds, if parallel: ~1 second
-        assertTrue(duration < 1500) // Parallel processing is fast
-    }
-}
-```
-
-**Example - Avoid**:
-```kotlin
-// Anti-pattern: Not testing concurrency at all
 @Test
-fun shouldProcessImages() {
-    val results = processor.process(images)
-    assertEquals(images.size, results.size)
-    // Doesn't verify parallel behavior
-}
-
-// Anti-pattern: Non-deterministic mocks
-class NonDeterministicMockLLM : LLMClient {
-    override suspend fun analyze(request: Request): Response {
-        delay(Random.nextLong(1000)) // Random delay!
-        return response // Can't predict ordering
+fun llmQueueMustMaintainOrder() = runTest {
+    val mockLlm = RecordingMockLLM()
+    val queue = LLMRequestQueue(mockLlm)
+    
+    // Fire many parallel enqueues
+    val jobs = (1..5).map { i ->
+        launch { queue.enqueue(Request("Request $i")) }
     }
+    jobs.joinAll()
+    
+    // Verify results processed sequentially and in received order
+    assertEquals(listOf("Request 1", "Request 2", "Request 3", "Request 4", "Request 5"), mockLlm.received)
 }
 ```
 </rule_4>
@@ -373,108 +173,12 @@ class NonDeterministicMockLLM : LLMClient {
 ---
 
 <rule_5 priority="MEDIUM">
-**FIXTURES & BUILDERS**: Reduce test setup boilerplate.
-- Create builder functions for common objects
-- Reusable fixtures for files, directories
-- Minimize duplication in test data
+**TEST DATA & FIXTURES**: Use realistic test data to exercise real paths.
+- Maintain a set of "Golden Master" images for testing.
+- Use builders to create complex state without exposing internal fields.
 
 **MUST**:
-- ✓ Factory functions for test objects
-- ✓ Builders for complex objects
-- ✓ Temporary directories/files cleaned up
-- ✓ Sensible defaults for test data
-
-**Example - Good**:
-```kotlin
-// Test fixtures
-fun createTestImage(
-    width: Int = 1024,
-    height: Int = 768,
-    format: ImageFormat = ImageFormat.PNG,
-    dominantColors: List<Int> = listOf(0x333333)
-): Image = Image(
-    width = width,
-    height = height,
-    format = format,
-    data = ByteArray(width * height * 3),
-    metadata = ImageMetadata(dominantColors = dominantColors)
-)
-
-fun createTestConfig(
-    samplesDir: String = "/tmp/samples",
-    candidatesDir: String = "/tmp/candidates",
-    outputDir: String = "/tmp/output"
-): Config = Config(
-    folders = FoldersConfig(
-        samples = samplesDir,
-        candidates = candidatesDir,
-        output = outputDir
-    ),
-    llm = LLMConfig(model = "test-model"),
-    processing = ProcessingConfig()
-)
-
-fun createTemporaryTestDirs(): TestDirs {
-    val temp = createTempDir()
-    return TestDirs(
-        samples = File(temp, "samples").apply { mkdirs() },
-        candidates = File(temp, "candidates").apply { mkdirs() },
-        output = File(temp, "output").apply { mkdirs() },
-        cleanup = { temp.deleteRecursively() }
-    )
-}
-
-// Usage in tests
-@Test
-suspend fun shouldProcessImages() {
-    val dirs = createTemporaryTestDirs()
-    try {
-        val config = createTestConfig(
-            samplesDir = dirs.samples.path,
-            candidatesDir = dirs.candidates.path,
-            outputDir = dirs.output.path
-        )
-        
-        // Test code...
-    } finally {
-        dirs.cleanup()
-    }
-}
+- ✓ Use `createTempDir()` for file-based tests.
+- ✓ Provide clear cleanup logic.
+- ✓ Keep test resources (images) small enough for quick execution but representative.
 ```
-
-**Example - Avoid**:
-```kotlin
-// Anti-pattern: Duplicated setup in every test
-@Test
-suspend fun test1() {
-    val config = Config(
-        folders = FoldersConfig(
-            samples = "/tmp/samples",
-            candidates = "/tmp/candidates",
-            output = "/tmp/output"
-        ),
-        // ... 10 more lines
-    )
-    // Duplicated in every test!
-}
-```
-</rule_5>
-
----
-
-## Checklist
-
-Before committing code:
-
-☐ **Coverage**: Happy path + error cases tested
-☐ **Mock LLM**: No real HTTP calls in tests
-☐ **Concurrency**: Sequential queue behavior verified
-☐ **Fixtures**: Reusable test data builders
-☐ **Cleanup**: Temporary files/directories deleted
-☐ **Naming**: Test names describe the scenario
-☐ **Speed**: Unit tests < 50ms, integration < 500ms
-☐ **All Tests Pass**: `./gradlew test` runs green
-
----
-
-**Last Updated**: 2026-03-08
