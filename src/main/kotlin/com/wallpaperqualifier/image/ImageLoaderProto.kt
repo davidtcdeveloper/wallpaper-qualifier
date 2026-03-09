@@ -20,8 +20,7 @@ import javax.imageio.ImageIO
  * - HEIC (.heic) - limited support; may require macOS native APIs
  * - RAW (.cr2, .nef, .arw, .dng) - limited support; may require external library
  */
-object ImageLoaderProto {
-    private val logger: Logger = Logger()
+class ImageLoaderProto(private val logger: Logger) {
     /**
      * Load an image from file and extract metadata.
      * This is the core prototype function for PHASE 2 Task 1.

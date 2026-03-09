@@ -11,7 +11,7 @@ import java.io.File
  * Loads images from a directory recursively and returns Image objects with metadata.
  * Handles format filtering, error recovery, and progress reporting.
  */
-class ImageLoader(private val logger: Logger) {
+class ImageLoader(private val logger: Logger, private val proto: ImageLoaderProto) {
 
     /**
      * Discover all images in a folder recursively.
@@ -91,7 +91,7 @@ class ImageLoader(private val logger: Logger) {
         val format = (formatResult as Result.Success).value
 
         // Load metadata using ImageLoaderProto
-        val metadataResult = ImageLoaderProto.loadImage(imagePath)
+        val metadataResult = proto.loadImage(imagePath)
         if (metadataResult is Result.Failure) {
             return Result.Failure(metadataResult.error)
         }
@@ -108,7 +108,7 @@ class ImageLoader(private val logger: Logger) {
             fileSize = file.length()
         )
 
-        return Result.Success(image)
+            return Result.Success(image)
     }
 
     /**

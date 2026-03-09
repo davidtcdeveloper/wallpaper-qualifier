@@ -14,7 +14,7 @@ import javax.imageio.ImageIO
 class ImageLoaderSpec : FunSpec({
 
     val logger = Logger()
-    val loader = ImageLoader(logger)
+    val loader = ImageLoader(logger, ImageLoaderProto(logger))
     val testDir = File("src/test/resources/images").apply { mkdirs() }
 
     fun createTestImage(filename: String, width: Int = 100, height: Int = 100, directory: File = testDir): File {

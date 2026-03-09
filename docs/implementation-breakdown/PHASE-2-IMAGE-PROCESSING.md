@@ -52,7 +52,7 @@ Phase 2 implements image handling: format detection, loading, temporary format c
 **Implementation Notes:**
 ```kotlin
 // Pseudo-code structure
-object ImageLoaderProto {
+class ImageLoaderProto(private val logger: Logger) {
     fun loadImage(path: String): Result<ImageMetadata> {
         return try {
             val bufferedImage = ImageIO.read(File(path))
@@ -63,6 +63,9 @@ object ImageLoaderProto {
         }
     }
 }
+
+// Instantiate with application logger where needed
+val loader = ImageLoaderProto(Logger())
 ```
 
 **If Koog Insufficient:**

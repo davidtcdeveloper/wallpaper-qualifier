@@ -2,8 +2,8 @@ package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.ImageProcessingException
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeGreaterThan
@@ -18,6 +18,7 @@ import javax.imageio.ImageIO
 class ImageLoaderProtoSpec : FunSpec({
 
     val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val proto = ImageLoaderProto(Logger())
 
     fun createTestImage(filename: String, width: Int, height: Int, format: String): File {
         val file = File(testDir, filename)
@@ -43,7 +44,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("loads JPEG image metadata") {
         val imageFile = createTestImage("test-jpeg.jpg", 800, 600, "JPEG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -56,7 +57,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("loads PNG image metadata") {
         val imageFile = createTestImage("test-png.png", 1024, 768, "PNG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -68,7 +69,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("loads GIF image metadata") {
         val imageFile = createTestImage("test-gif.gif", 640, 480, "GIF")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -80,7 +81,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("loads BMP image metadata") {
         val imageFile = createTestImage("test-bmp.bmp", 512, 512, "BMP")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -92,7 +93,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("extracts complete metadata") {
         val imageFile = createTestImage("test-metadata.png", 1920, 1080, "PNG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -106,7 +107,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("detects color depth") {
         val imageFile = createTestImage("test-colordepth.png", 256, 256, "PNG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -116,14 +117,14 @@ class ImageLoaderProtoSpec : FunSpec({
     test("fails on corrupted image") {
         val corruptedFile = createCorruptedImage("corrupted.jpg")
 
-        val failure = ImageLoaderProto.loadImage(corruptedFile.absolutePath)
+        val failure = proto.loadImage(corruptedFile.absolutePath)
             .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
 
         failure.error.shouldBeInstanceOf<ImageProcessingException>()
     }
 
     test("fails on nonexistent image") {
-        val failure = ImageLoaderProto.loadImage("/nonexistent/path/to/image.jpg")
+        val failure = proto.loadImage("/nonexistent/path/to/image.jpg")
             .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
 
         failure.error.message.shouldContain("not found")
@@ -133,7 +134,7 @@ class ImageLoaderProtoSpec : FunSpec({
         val imageFile = createTestImage("test-unreadable.png", 100, 100, "PNG")
         imageFile.setReadable(false)
 
-        ImageLoaderProto.loadImage(imageFile.absolutePath)
+        proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
 
         imageFile.setReadable(true)
@@ -144,7 +145,7 @@ class ImageLoaderProtoSpec : FunSpec({
         val image2 = createTestImage("multi-2.png", 1024, 768, "PNG")
         val image3 = createTestImage("multi-3.gif", 640, 480, "GIF")
 
-        val metadata = ImageLoaderProto.loadImages(listOf(image1.absolutePath, image2.absolutePath, image3.absolutePath))
+        val metadata = proto.loadImages(listOf(image1.absolutePath, image2.absolutePath, image3.absolutePath))
             .shouldBeInstanceOf<Result.Success<List<ImageMetadata>>>()
             .value
 
@@ -156,7 +157,7 @@ class ImageLoaderProtoSpec : FunSpec({
         val invalidPath = "/nonexistent/invalid.jpg"
         val image2 = createTestImage("multi-valid-2.png", 1024, 768, "PNG")
 
-        val metadata = ImageLoaderProto.loadImages(listOf(image1.absolutePath, invalidPath, image2.absolutePath))
+        val metadata = proto.loadImages(listOf(image1.absolutePath, invalidPath, image2.absolutePath))
             .shouldBeInstanceOf<Result.Success<List<ImageMetadata>>>()
             .value
 
@@ -166,7 +167,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("calculates aspect ratio") {
         val imageFile = createTestImage("test-aspect.png", 1280, 720, "PNG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
@@ -176,7 +177,7 @@ class ImageLoaderProtoSpec : FunSpec({
     test("extracts filename") {
         val imageFile = createTestImage("test-filename.jpg", 100, 100, "JPEG")
 
-        val metadata = ImageLoaderProto.loadImage(imageFile.absolutePath)
+        val metadata = proto.loadImage(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadata>>()
             .value
 
