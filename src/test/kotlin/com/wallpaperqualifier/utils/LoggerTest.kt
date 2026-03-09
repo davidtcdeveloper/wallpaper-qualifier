@@ -1,185 +1,125 @@
 package com.wallpaperqualifier.utils
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
-class LoggerTest {
+class LoggerTest : FunSpec({
 
-    @Test
-    fun testLogInfo() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("info messages include level and text") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.info("Test info message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("Test info message"))
-            assertTrue(output.contains("[INFO]"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldContain("Test info message")
+        output.shouldContain("[INFO]")
     }
 
-    @Test
-    fun testLogWarn() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldErr = System.err
-        System.setErr(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("warn messages include level and text on stderr") {
+        val output = captureStdErr {
+            val logger = Logger()
             logger.warn("Test warning message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("Test warning message"))
-            assertTrue(output.contains("[WARN]"))
-        } finally {
-            System.setErr(oldErr)
         }
+
+        output.shouldContain("Test warning message")
+        output.shouldContain("[WARN]")
     }
 
-    @Test
-    fun testLogError() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldErr = System.err
-        System.setErr(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("error messages include level and text on stderr") {
+        val output = captureStdErr {
+            val logger = Logger()
             logger.error("Test error message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("Test error message"))
-            assertTrue(output.contains("[ERROR]"))
-        } finally {
-            System.setErr(oldErr)
         }
+
+        output.shouldContain("Test error message")
+        output.shouldContain("[ERROR]")
     }
 
-    @Test
-    fun testDebugNotLoggedNormally() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("debug messages are suppressed when verbose is false") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.setVerbose(false)
             logger.debug("Test debug message")
-
-            val output = outputCapture.toString()
-            assertFalse(output.contains("Test debug message"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldNotContain("Test debug message")
     }
 
-    @Test
-    fun testDebugLoggedInVerboseMode() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("debug messages appear when verbose is true") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.setVerbose(true)
             logger.debug("Test debug message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("Test debug message"))
-            assertTrue(output.contains("[DEBUG]"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldContain("Test debug message")
+        output.shouldContain("[DEBUG]")
     }
 
-    @Test
-    fun testLogIncludesTimestamp() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("info messages include timestamp punctuation") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.info("Timestamped message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("-") && output.contains(":"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldContain("-")
+        output.shouldContain(":")
     }
 
-    @Test
-    fun testLogIncludesLevel() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("info messages include level text") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.info("Leveled message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("[INFO]"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldContain("[INFO]")
     }
 
-    @Test
-    fun testErrorWithThrowable() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldErr = System.err
-        System.setErr(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("error logs with throwable include both message and exception") {
+        val output = captureStdErr {
+            val logger = Logger()
             logger.setVerbose(true)
             val exception = Exception("Test exception")
             logger.error("Error with exception", exception)
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("Error with exception"))
-            assertTrue(output.contains("Test exception"))
-        } finally {
-            System.setErr(oldErr)
         }
+
+        output.shouldContain("Error with exception")
+        output.shouldContain("Test exception")
     }
 
-    @Test
-    fun testMultipleMessages() {
-        val outputCapture = ByteArrayOutputStream()
-        val oldOut = System.out
-        System.setOut(PrintStream(outputCapture))
-
-        val logger = Logger()
-
-        try {
+    test("multiple info messages are emitted sequentially") {
+        val output = captureStdOut {
+            val logger = Logger()
             logger.info("First message")
             logger.info("Second message")
             logger.info("Third message")
-
-            val output = outputCapture.toString()
-            assertTrue(output.contains("First message"))
-            assertTrue(output.contains("Second message"))
-            assertTrue(output.contains("Third message"))
-        } finally {
-            System.setOut(oldOut)
         }
+
+        output.shouldContain("First message")
+        output.shouldContain("Second message")
+        output.shouldContain("Third message")
+    }
+})
+
+private fun captureStdOut(block: () -> Unit): String {
+    return captureStream(System.out, System::setOut, block)
+}
+
+private fun captureStdErr(block: () -> Unit): String {
+    return captureStream(System.err, System::setErr, block)
+}
+
+private fun captureStream(original: PrintStream, setter: (PrintStream) -> Unit, block: () -> Unit): String {
+    val outputCapture = ByteArrayOutputStream()
+    val printStream = PrintStream(outputCapture)
+    return try {
+        setter(printStream)
+        block()
+        outputCapture.toString()
+    } finally {
+        setter(original)
     }
 }

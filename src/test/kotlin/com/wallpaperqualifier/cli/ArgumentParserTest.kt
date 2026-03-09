@@ -1,131 +1,109 @@
 package com.wallpaperqualifier.cli
 
+import com.wallpaperqualifier.domain.Result
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.File
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
-class ArgumentParserTest {
+private val parser = ArgumentParser()
 
-    private val parser = ArgumentParser()
+class ArgumentParserTest : FunSpec({
 
-    @Test
-    fun testHelpFlag() {
+    test("help flag returns ShowHelp") {
         val result = parser.parse(arrayOf("--help"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        assertEquals(ParsedArgs.ShowHelp, (result as com.wallpaperqualifier.domain.Result.Success).value)
+
+        val success = result.shouldBeInstanceOf<Result.Success<ParsedArgs>>()
+        success.value shouldBe ParsedArgs.ShowHelp
     }
 
-    @Test
-    fun testHelpFlagShortForm() {
+    test("short help flag returns ShowHelp") {
         val result = parser.parse(arrayOf("-h"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        assertEquals(ParsedArgs.ShowHelp, (result as com.wallpaperqualifier.domain.Result.Success).value)
+
+        val success = result.shouldBeInstanceOf<Result.Success<ParsedArgs>>()
+        success.value shouldBe ParsedArgs.ShowHelp
     }
 
-    @Test
-    fun testVersionFlag() {
+    test("version flag returns ShowVersion") {
         val result = parser.parse(arrayOf("--version"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        assertEquals(ParsedArgs.ShowVersion, (result as com.wallpaperqualifier.domain.Result.Success).value)
+
+        val success = result.shouldBeInstanceOf<Result.Success<ParsedArgs>>()
+        success.value shouldBe ParsedArgs.ShowVersion
     }
 
-    @Test
-    fun testVersionFlagShortForm() {
+    test("short version flag returns ShowVersion") {
         val result = parser.parse(arrayOf("-V"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        assertEquals(ParsedArgs.ShowVersion, (result as com.wallpaperqualifier.domain.Result.Success).value)
+
+        val success = result.shouldBeInstanceOf<Result.Success<ParsedArgs>>()
+        success.value shouldBe ParsedArgs.ShowVersion
     }
 
-    @Test
-    fun testValidConfigFile() {
-        // Create a temporary config file
-        val tempFile = Files.createTempFile("test-config", ".json").toFile()
-        tempFile.writeText("""{"folders":{"samples":"/tmp","candidates":"/tmp","output":"/tmp","temp":"/tmp"}}""")
-        
-        try {
+    test("valid config path returns RunWithConfig") {
+        withTempConfigFile("""{"folders":{"samples":"/tmp","candidates":"/tmp","output":"/tmp","temp":"/tmp"}}""") { tempFile ->
             val result = parser.parse(arrayOf(tempFile.absolutePath))
-            
-            assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-            val parsedArgs = (result as com.wallpaperqualifier.domain.Result.Success).value
-            assertTrue(parsedArgs is ParsedArgs.RunWithConfig)
-            assertEquals(tempFile.absolutePath, (parsedArgs as ParsedArgs.RunWithConfig).configPath)
-        } finally {
-            tempFile.delete()
+
+            val success = result.shouldBeInstanceOf<Result.Success<ParsedArgs>>()
+            val parsedArgs = success.value.shouldBeInstanceOf<ParsedArgs.RunWithConfig>()
+            parsedArgs.configPath shouldBe tempFile.absolutePath
         }
     }
 
-    @Test
-    fun testConfigFileNotFound() {
+    test("config file not found returns failure") {
         val result = parser.parse(arrayOf("/nonexistent/path/config.json"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("not found") == true)
+        result.failureMessageShouldContain("not found")
     }
 
-    @Test
-    fun testConfigPathNotJsonFormat() {
+    test("config path with wrong format returns failure") {
         val result = parser.parse(arrayOf("/path/to/config.txt"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("not found") == true)
+        result.failureMessageShouldContain("not found")
     }
 
-    @Test
-    fun testConfigFileNotReadable() {
-        // Create a temporary config file
-        val tempFile = Files.createTempFile("test-config", ".json").toFile()
-        tempFile.writeText("{}")
-        
-        try {
-            // Make it unreadable (this may not work on all systems)
-            val readable = tempFile.setReadable(false)
-            if (readable) {
-                val result = parser.parse(arrayOf(tempFile.absolutePath))
-                assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-            }
-        } finally {
-            tempFile.setReadable(true)
-            tempFile.delete()
+    test("config file not readable returns failure when permission change succeeds") {
+        withTempConfigFile("{}") { tempFile ->
+            if (!tempFile.setReadable(false)) return@withTempConfigFile
+
+            val result = parser.parse(arrayOf(tempFile.absolutePath))
+            result.shouldBeInstanceOf<Result.Failure<*>>()
         }
     }
 
-    @Test
-    fun testNoArguments() {
+    test("no arguments returns failure") {
         val result = parser.parse(arrayOf())
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("No arguments provided") == true)
+        result.failureMessageShouldContain("No arguments provided")
     }
 
-    @Test
-    fun testUnknownArgument() {
+    test("unknown argument returns failure") {
         val result = parser.parse(arrayOf("--unknown"))
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("Unknown argument") == true)
+        result.failureMessageShouldContain("Unknown argument")
     }
 
-    @Test
-    fun testVersionConstant() {
-        assertEquals("0.1.0", VERSION)
+    test("version constant maintained") {
+        VERSION shouldBe "0.1.0"
     }
 
-    @Test
-    fun testUsageText() {
-        assertTrue(USAGE.contains("Wallpaper Qualifier"))
-        assertTrue(USAGE.contains("--help"))
-        assertTrue(USAGE.contains("--version"))
+    test("usage text describes flags") {
+        USAGE.shouldContain("Wallpaper Qualifier")
+        USAGE.shouldContain("--help")
+        USAGE.shouldContain("--version")
+    }
+})
+
+private fun Result<ParsedArgs>.failureMessageShouldContain(expected: String) {
+    val failure = this.shouldBeInstanceOf<Result.Failure<*>>()
+    failure.error.message.shouldNotBeNull().shouldContain(expected)
+}
+
+private fun withTempConfigFile(content: String, block: (File) -> Unit) {
+    val tempFile = Files.createTempFile("test-config", ".json").toFile()
+    try {
+        tempFile.writeText(content)
+        block(tempFile)
+    } finally {
+        if (tempFile.exists()) {
+            tempFile.delete()
+        }
     }
 }

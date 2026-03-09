@@ -316,6 +316,44 @@ object ArgumentParser {
 
 ---
 
+<rule_9 priority="MEDIUM">
+**PREFER COROUTINE DISPATCHERS OVER `@Synchronized`**: Guard mutable helper state with a single-thread `CoroutineDispatcher` instead of JVM synchronization. `@Synchronized` hides queueing costs, can deadlock when mixed with suspending code, and interferes with structured concurrency. Provide suspend APIs (`withContext(dispatcher)`) and document how to close the dispatcher when the helper is no longer needed.
+
+**MUST**:
+- ✓ Run all state updates through a dedicated dispatcher (`newSingleThreadContext`, `Executors.newSingleThreadExecutor().asCoroutineDispatcher()`, or an actor) so no other thread can mutate shared counters.
+- ✓ Avoid attaching `@Synchronized` to Kotlin methods; instead make the methods `suspend` and confine their bodies to the dispatcher with `withContext`.
+- ✓ Provide lifecycle helpers (e.g., `shutdown`/`close`) for dispatcher-backed helpers to release threads after use.
+
+**Example - Good**:
+```kotlin
+class ProgressReporter(private val logger: Logger) {
+    private val dispatcher = newSingleThreadContext("progress-reporter")
+
+    suspend fun reportItem() = withContext(dispatcher) {
+        // update counters and log progress
+    }
+
+    fun shutdown() {
+        dispatcher.close()
+    }
+}
+```
+
+**Example - Avoid**:
+```kotlin
+class ProgressReporter {
+    private var processed = 0
+
+    @Synchronized
+    fun reportItem() {
+        processed++
+    }
+}
+```
+</rule_9>
+
+---
+
 ## Code Quality Checklist
 
 Before committing, verify:

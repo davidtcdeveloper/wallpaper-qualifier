@@ -1,16 +1,17 @@
 package com.wallpaperqualifier.domain
 
-import kotlin.test.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
-import kotlin.test.assertFalse
-import kotlin.test.assertEquals
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.floats.shouldBeGreaterThan
+import io.kotest.matchers.floats.shouldBeLessThan
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-class ModelsTest {
+class ModelsTest : FunSpec({
 
-    @Test
-    fun testImageCreation() {
+    test("image creation retains metadata and computes aspect ratio") {
         val image = Image.create(
             path = "/path/to/image.jpg",
             format = ImageFormat.JPEG,
@@ -19,16 +20,16 @@ class ModelsTest {
             fileSize = 512000L
         )
 
-        assertEquals("/path/to/image.jpg", image.path)
-        assertEquals(ImageFormat.JPEG, image.format)
-        assertEquals(1920, image.width)
-        assertEquals(1080, image.height)
-        assertEquals(512000L, image.fileSize)
-        assertTrue(image.aspectRatio > 1.77f && image.aspectRatio < 1.78f)
+        image.path shouldBe "/path/to/image.jpg"
+        image.format shouldBe ImageFormat.JPEG
+        image.width shouldBe 1920
+        image.height shouldBe 1080
+        image.fileSize shouldBe 512000L
+        image.aspectRatio.shouldBeGreaterThan(1.77f)
+        image.aspectRatio.shouldBeLessThan(1.78f)
     }
 
-    @Test
-    fun testImageCharacteristics() {
+    test("image characteristics expose palette and quality") {
         val characteristics = ImageCharacteristics(
             colorPalette = listOf("blue", "green", "yellow"),
             style = "modern",
@@ -39,13 +40,12 @@ class ModelsTest {
             quality = 0.95f
         )
 
-        assertEquals(3, characteristics.colorPalette.size)
-        assertEquals("modern", characteristics.style)
-        assertEquals(0.95f, characteristics.quality)
+        characteristics.colorPalette.size shouldBe 3
+        characteristics.style shouldBe "modern"
+        characteristics.quality shouldBe 0.95f
     }
 
-    @Test
-    fun testQualityProfile() {
+    test("quality profile aggregates preferences") {
         val profile = QualityProfile(
             preferredColorPalettes = listOf("blue", "green"),
             preferredStyles = listOf("modern", "minimalist"),
@@ -57,13 +57,12 @@ class ModelsTest {
             sampleCount = 5
         )
 
-        assertEquals(5, profile.sampleCount)
-        assertEquals(2, profile.preferredColorPalettes.size)
-        assertEquals(0.92f, profile.averageQuality)
+        profile.sampleCount shouldBe 5
+        profile.preferredColorPalettes.size shouldBe 2
+        profile.averageQuality shouldBe 0.92f
     }
 
-    @Test
-    fun testEvaluationResult() {
+    test("evaluation result surfaces its confidence") {
         val result = EvaluationResult(
             imagePath = "/path/to/candidate.jpg",
             qualified = true,
@@ -71,65 +70,39 @@ class ModelsTest {
             reasoning = "Matches color palette and style preferences"
         )
 
-        assertTrue(result.qualified)
-        assertEquals(0.87f, result.confidenceScore)
-        assertEquals("/path/to/candidate.jpg", result.imagePath)
+        result.qualified.shouldBeTrue()
+        result.confidenceScore shouldBe 0.87f
+        result.imagePath shouldBe "/path/to/candidate.jpg"
+        result.reasoning.shouldNotBeNull()
     }
 
-    @Test
-    fun testResultSuccess() {
+    test("result success exposes the wrapped value") {
         val result: Result<String> = Result.Success("test value")
 
-        assertEquals("test value", result.getOrNull())
-        assertEquals("test value", result.getOrThrow())
+        result.getOrNull() shouldBe "test value"
+        result.getOrThrow() shouldBe "test value"
     }
 
-    @Test
-    fun testResultFailure() {
+    test("result failure throws the wrapped exception") {
         val exception = Exception("Test error")
         val result: Result<String> = Result.Failure(exception)
 
-        assertNull(result.getOrNull())
-        try {
-            result.getOrThrow()
-            assertFalse(true) // Should not reach here
-        } catch (e: Exception) {
-            assertEquals("Test error", e.message)
-        }
+        result.getOrNull().shouldBeNull()
+        val thrown = shouldThrow<Exception> { result.getOrThrow() }
+        thrown.message shouldBe "Test error"
     }
 
-    @Test
-    fun testResultMap() {
+    test("mapping success result transforms the value") {
         val result: Result<Int> = Result.Success(5)
         val mapped = result.map { it * 2 }
 
-        assertEquals(10, mapped.getOrNull())
+        mapped.getOrNull() shouldBe 10
     }
 
-    @Test
-    fun testCustomExceptions() {
-        try {
-            throw ConfigurationException("Invalid config")
-        } catch (e: ConfigurationException) {
-            assertEquals("Invalid config", e.message)
-        }
-
-        try {
-            throw ImageProcessingException("Processing failed")
-        } catch (e: ImageProcessingException) {
-            assertEquals("Processing failed", e.message)
-        }
-
-        try {
-            throw LLMException("LLM error")
-        } catch (e: LLMException) {
-            assertEquals("LLM error", e.message)
-        }
-
-        try {
-            throw FileIOException("File not found")
-        } catch (e: FileIOException) {
-            assertEquals("File not found", e.message)
-        }
+    test("custom exceptions carry provided messages") {
+        shouldThrow<ConfigurationException> { throw ConfigurationException("Invalid config") }
+        shouldThrow<ImageProcessingException> { throw ImageProcessingException("Processing failed") }
+        shouldThrow<LLMException> { throw LLMException("LLM error") }
+        shouldThrow<FileIOException> { throw FileIOException("File not found") }
     }
-}
+})

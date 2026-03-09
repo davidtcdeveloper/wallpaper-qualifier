@@ -1,17 +1,18 @@
 package com.wallpaperqualifier.config
 
 import com.wallpaperqualifier.domain.ConfigurationException
+import com.wallpaperqualifier.domain.Result
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.File
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
-class ConfigParserTest {
+class ConfigParserTest : FunSpec({
 
-    private val parser = ConfigParser()
-
-    private val validConfigJson = """
+    val validConfigJson = """
         {
             "folders": {
                 "samples": "/tmp",
@@ -31,26 +32,22 @@ class ConfigParserTest {
         }
     """.trimIndent()
 
-    @Test
-    fun testParseValidJson() {
-        val result = parser.parseJson(validConfigJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        val config = (result as com.wallpaperqualifier.domain.Result.Success).value
-        
-        assertEquals("/tmp", config.folders.samples)
-        assertEquals("/tmp", config.folders.candidates)
-        assertEquals("/tmp", config.folders.output)
-        assertEquals("/tmp", config.folders.temp)
-        assertEquals("http://localhost:1234/api/v1", config.llm.endpoint)
-        assertEquals("llama2", config.llm.model)
-        assertEquals(8, config.processing.maxParallelTasks)
-        assertEquals("original", config.processing.outputFormat)
-        assertEquals(90, config.processing.jpegQuality)
+    test("valid json parses into configuration") {
+        val result = ConfigParser().parseJson(validConfigJson)
+
+        val config = result.shouldBeInstanceOf<Result.Success<AppConfig>>().value
+        config.folders.samples shouldBe "/tmp"
+        config.folders.candidates shouldBe "/tmp"
+        config.folders.output shouldBe "/tmp"
+        config.folders.temp shouldBe "/tmp"
+        config.llm.endpoint shouldBe "http://localhost:1234/api/v1"
+        config.llm.model shouldBe "llama2"
+        config.processing.maxParallelTasks shouldBe 8
+        config.processing.outputFormat shouldBe "original"
+        config.processing.jpegQuality shouldBe 90
     }
 
-    @Test
-    fun testParseWithDefaults() {
+    test("missing optional sections fall back to defaults") {
         val minimalConfigJson = """
             {
                 "folders": {
@@ -61,33 +58,25 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(minimalConfigJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-        val config = (result as com.wallpaperqualifier.domain.Result.Success).value
-        
-        // Should use defaults
-        assertEquals("http://localhost:1234/api/v1", config.llm.endpoint)
-        assertEquals("llama2", config.llm.model)
-        assertEquals(8, config.processing.maxParallelTasks)
-        assertEquals("original", config.processing.outputFormat)
-        assertEquals(90, config.processing.jpegQuality)
+
+        val result = ConfigParser().parseJson(minimalConfigJson)
+
+        val config = result.shouldBeInstanceOf<Result.Success<AppConfig>>().value
+        config.llm.endpoint shouldBe "http://localhost:1234/api/v1"
+        config.llm.model shouldBe "llama2"
+        config.processing.maxParallelTasks shouldBe 8
+        config.processing.outputFormat shouldBe "original"
+        config.processing.jpegQuality shouldBe 90
     }
 
-    @Test
-    fun testParseInvalidJson() {
-        val invalidJson = "{ invalid json }"
-        
-        val result = parser.parseJson(invalidJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error is ConfigurationException)
+    test("invalid json returns configuration exception") {
+        val result = ConfigParser().parseJson("{ invalid json }")
+
+        val failure = result.shouldBeInstanceOf<Result.Failure<*>>()
+        failure.error.shouldBeInstanceOf<ConfigurationException>()
     }
 
-    @Test
-    fun testMissingRequiredField() {
+    test("missing required folders fails validation") {
         val missingFoldersJson = """
             {
                 "llm": {
@@ -96,14 +85,11 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(missingFoldersJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
+
+        ConfigParser().parseJson(missingFoldersJson).failureMessageShouldContain("folders")
     }
 
-    @Test
-    fun testValidateEmptySamplesFolder() {
+    test("empty samples folder fails validation") {
         val emptyFoldersJson = """
             {
                 "folders": {
@@ -114,16 +100,11 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(emptyFoldersJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("samples path cannot be empty") == true)
+
+        ConfigParser().parseJson(emptyFoldersJson).failureMessageShouldContain("samples path cannot be empty")
     }
 
-    @Test
-    fun testValidateInvalidMaxParallelTasks() {
+    test("invalid parallel tasks value fails validation") {
         val invalidParallelJson = """
             {
                 "folders": {
@@ -137,16 +118,11 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(invalidParallelJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("maxParallelTasks must be between 1 and 128") == true)
+
+        ConfigParser().parseJson(invalidParallelJson).failureMessageShouldContain("maxParallelTasks must be between 1 and 128")
     }
 
-    @Test
-    fun testValidateInvalidJpegQuality() {
+    test("invalid jpeg quality fails validation") {
         val invalidQualityJson = """
             {
                 "folders": {
@@ -160,16 +136,11 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(invalidQualityJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("jpegQuality must be between 1 and 100") == true)
+
+        ConfigParser().parseJson(invalidQualityJson).failureMessageShouldContain("jpegQuality must be between 1 and 100")
     }
 
-    @Test
-    fun testValidateInvalidOutputFormat() {
+    test("invalid output format fails validation") {
         val invalidFormatJson = """
             {
                 "folders": {
@@ -183,52 +154,46 @@ class ConfigParserTest {
                 }
             }
         """.trimIndent()
-        
-        val result = parser.parseJson(invalidFormatJson)
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("outputFormat must be") == true)
+
+        ConfigParser().parseJson(invalidFormatJson).failureMessageShouldContain("outputFormat must be")
     }
 
-    @Test
-    fun testParseFile() {
-        // Create a temporary config file
-        val tempFile = Files.createTempFile("test-config", ".json").toFile()
-        tempFile.writeText(validConfigJson)
-        
-        try {
-            val result = parser.parseFile(tempFile.absolutePath)
-            
-            assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
-            val config = (result as com.wallpaperqualifier.domain.Result.Success).value
-            assertEquals("/tmp", config.folders.samples)
-        } finally {
-            tempFile.delete()
+    test("parse file succeeds from disk") {
+        withTempConfigFile(validConfigJson) { tempFile ->
+            val result = ConfigParser().parseFile(tempFile.absolutePath)
+
+            val config = result.shouldBeInstanceOf<Result.Success<AppConfig>>().value
+            config.folders.samples shouldBe "/tmp"
         }
     }
 
-    @Test
-    fun testParseFileNotFound() {
-        val result = parser.parseFile("/nonexistent/config.json")
-        
-        assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-        val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("not found") == true)
+    test("parse file not found returns failure") {
+        ConfigParser().parseFile("/nonexistent/config.json").failureMessageShouldContain("not found")
     }
 
-    @Test
-    fun testParseFileIsDirectory() {
+    test("parse file pointing at directory returns failure") {
         val tempDir = Files.createTempDirectory("test-config-dir").toFile()
-        
         try {
-            val result = parser.parseFile(tempDir.absolutePath)
-            
-            assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
-            val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-            assertTrue(error.message?.contains("not a file") == true)
+            ConfigParser().parseFile(tempDir.absolutePath).failureMessageShouldContain("not a file")
         } finally {
             tempDir.delete()
+        }
+    }
+})
+
+private fun Result<*>.failureMessageShouldContain(expected: String) {
+    val failure = this.shouldBeInstanceOf<Result.Failure<*>>()
+    failure.error.message.shouldNotBeNull().shouldContain(expected)
+}
+
+private fun withTempConfigFile(content: String, block: (File) -> Unit) {
+    val tempFile = Files.createTempFile("test-config", ".json").toFile()
+    try {
+        tempFile.writeText(content)
+        block(tempFile)
+    } finally {
+        if (tempFile.exists()) {
+            tempFile.delete()
         }
     }
 }

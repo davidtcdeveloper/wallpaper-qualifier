@@ -1,13 +1,20 @@
 package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.utils.Logger
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.newSingleThreadContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 /**
  * Reports progress during image processing operations.
  * Provides feedback on current phase, completion percentage, and ETA.
+ * Runs entirely on a dedicated single-thread dispatcher instead of synchronized blocks.
  */
 class ProgressReporter(private val logger: Logger) {
 
+    private val dispatcher: ExecutorCoroutineDispatcher = newSingleThreadContext("progress-reporter")
     private var startTime: Long = 0
     private var totalItems: Int = 0
     private var processedItems: Int = 0
@@ -19,10 +26,9 @@ class ProgressReporter(private val logger: Logger) {
      * @param phase Description of current phase
      * @param totalItems Total number of items to process
      */
-    @Synchronized
-    fun startPhase(phase: String, totalItems: Int) {
+    suspend fun startPhase(phase: String, totalItems: Int) = withContext(dispatcher) {
         currentPhase = phase
-        this.totalItems = totalItems
+        this@ProgressReporter.totalItems = totalItems
         processedItems = 0
         startTime = System.currentTimeMillis()
         logger.info("$phase: Starting (total: $totalItems items)")
@@ -33,11 +39,10 @@ class ProgressReporter(private val logger: Logger) {
      *
      * @param itemName Name or identifier of current item
      */
-    @Synchronized
-    fun reportItem(itemName: String = "") {
+    suspend fun reportItem(itemName: String = "") = withContext(dispatcher) {
         processedItems++
         if (processedItems % 10 == 0 || processedItems == totalItems) {
-            reportProgress(itemName)
+            reportProgressLocked(itemName)
         }
     }
 
@@ -46,52 +51,59 @@ class ProgressReporter(private val logger: Logger) {
      *
      * @param count Number of items completed in batch
      */
-    @Synchronized
-    fun reportBatch(count: Int) {
+    suspend fun reportBatch(count: Int) = withContext(dispatcher) {
         processedItems += count
         if (processedItems <= totalItems) {
-            reportProgress()
+            reportProgressLocked()
         }
     }
 
     /**
      * Get current progress percentage.
      */
-    @Synchronized
-    fun getPercentage(): Int {
-        if (totalItems == 0) return 0
-        return (processedItems * 100) / totalItems
+    suspend fun getPercentage(): Int = withContext(dispatcher) {
+        if (totalItems == 0) return@withContext 0
+        (processedItems * 100) / totalItems
     }
 
     /**
      * Estimate time remaining.
      */
-    @Synchronized
-    fun getEstimatedTimeRemaining(): Long {
-        if (processedItems == 0) return 0
+    suspend fun getEstimatedTimeRemaining(): Long = withContext(dispatcher) {
+        if (processedItems == 0) return@withContext 0L
         val elapsedMs = System.currentTimeMillis() - startTime
         val itemsPerMs = processedItems.toDouble() / elapsedMs
         val remainingItems = totalItems - processedItems
-        return (remainingItems / itemsPerMs).toLong()
+        (remainingItems / itemsPerMs).toLong()
     }
 
     /**
      * End current phase and report summary.
      */
-    @Synchronized
-    fun endPhase() {
+    suspend fun endPhase() = withContext(dispatcher) {
         val elapsedMs = System.currentTimeMillis() - startTime
         val elapsedSeconds = elapsedMs / 1000.0
         logger.info("$currentPhase: Completed $processedItems/$totalItems items in ${String.format("%.1f", elapsedSeconds)}s")
     }
 
     /**
+     * Forcefully release dispatcher resources.
+     */
+    fun shutdown() {
+        dispatcher.close()
+    }
+
+    /**
      * Report progress to logger.
      */
-    @Synchronized
-    private fun reportProgress(itemName: String = "") {
-        val percentage = getPercentage()
-        val eta = getEstimatedTimeRemaining()
+    private fun reportProgressLocked(itemName: String = "") {
+        val percentage = if (totalItems == 0) 0 else (processedItems * 100) / totalItems
+        val eta = if (processedItems == 0) 0L else {
+            val elapsedMs = System.currentTimeMillis() - startTime
+            val itemsPerMs = processedItems.toDouble() / elapsedMs
+            val remainingItems = totalItems - processedItems
+            (remainingItems / itemsPerMs).toLong()
+        }
         val etaSeconds = eta / 1000
 
         val itemInfo = if (itemName.isNotEmpty()) " ($itemName)" else ""

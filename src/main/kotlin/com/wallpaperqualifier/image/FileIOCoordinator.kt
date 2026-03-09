@@ -52,15 +52,15 @@ class FileIOCoordinator(
 
                 coroutineScope {
                     val deferredList = batch.map { path ->
-                        async(Dispatchers.IO) {
-                            semaphore.acquire()
-                            try {
-                                val result = processor(path)
-                                progressReporter.reportItem(path)
-                                ProcessingOutcome(path, result)
-                            } finally {
-                                semaphore.release()
-                            }
+                         async(Dispatchers.IO) {
+                             semaphore.acquire()
+                             try {
+                                 val result = processor(path)
+                                 progressReporter.reportItem(path)
+                                 ProcessingOutcome(path, result)
+                             } finally {
+                                 semaphore.release()
+                             }
                         }
                     }
 

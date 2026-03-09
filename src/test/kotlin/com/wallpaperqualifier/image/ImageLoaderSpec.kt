@@ -13,7 +13,7 @@ import javax.imageio.ImageIO
 
 class ImageLoaderSpec : FunSpec({
 
-    val logger = Logger
+    val logger = Logger()
     val loader = ImageLoader(logger)
     val testDir = File("src/test/resources/images").apply { mkdirs() }
 

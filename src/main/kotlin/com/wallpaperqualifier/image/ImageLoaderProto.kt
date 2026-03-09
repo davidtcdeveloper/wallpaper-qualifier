@@ -21,8 +21,7 @@ import javax.imageio.ImageIO
  * - RAW (.cr2, .nef, .arw, .dng) - limited support; may require external library
  */
 object ImageLoaderProto {
-    private val logger = Logger
-
+    private val logger: Logger = Logger()
     /**
      * Load an image from file and extract metadata.
      * This is the core prototype function for PHASE 2 Task 1.

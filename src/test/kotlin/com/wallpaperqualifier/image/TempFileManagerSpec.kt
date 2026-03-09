@@ -13,7 +13,7 @@ import java.io.File
 
 class TempFileManagerSpec : FunSpec({
 
-    val manager = TempFileManager(Logger)
+    val manager = TempFileManager(Logger())
 
     test("creates temp file with original name and extension") {
         val result = manager.createTempFile("/path/to/original.jpg", "png")
