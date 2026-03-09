@@ -3,9 +3,9 @@ package com.wallpaperqualifier.image
 import com.wallpaperqualifier.domain.Result
 import com.wallpaperqualifier.utils.Logger
 import kotlinx.coroutines.*
+import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.Collections
-import java.util.concurrent.Semaphore
-import kotlin.math.min
+import java.util.concurrent.Executors
 
 /**
  * Coordinates parallel image processing with configurable thread pool.
@@ -17,7 +17,8 @@ class FileIOCoordinator(
     private val batchSize: Int = 100
 ) {
 
-    private val semaphore = Semaphore(maxThreads)
+    private val workerDispatcher: ExecutorCoroutineDispatcher =
+        Executors.newFixedThreadPool(maxThreads).asCoroutineDispatcher()
     private val progressReporter = ProgressReporter(logger)
 
     private data class ProcessingOutcome<T>(
@@ -52,15 +53,10 @@ class FileIOCoordinator(
 
                 coroutineScope {
                     val deferredList = batch.map { path ->
-                         async(Dispatchers.IO) {
-                             semaphore.acquire()
-                             try {
-                                 val result = processor(path)
-                                 progressReporter.reportItem(path)
-                                 ProcessingOutcome(path, result)
-                             } finally {
-                                 semaphore.release()
-                             }
+                        async(workerDispatcher) {
+                            val result = processor(path)
+                            progressReporter.reportItem(path)
+                            ProcessingOutcome(path, result)
                         }
                     }
 
@@ -149,6 +145,14 @@ class FileIOCoordinator(
      * Get thread pool info.
      */
     fun getPoolInfo(): String {
-        return "ThreadPool(max=$maxThreads, batchSize=$batchSize)"
+        return "Dispatcher(maxThreads=$maxThreads, batchSize=$batchSize)"
+    }
+
+    /**
+     * Shutdown dispatcher resources used for processing.
+     */
+    fun shutdown() {
+        progressReporter.shutdown()
+        workerDispatcher.close()
     }
 }

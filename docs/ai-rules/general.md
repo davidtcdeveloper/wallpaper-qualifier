@@ -352,6 +352,11 @@ class ProgressReporter {
 ```
 </rule_9>
 
+**NOTE ON SEMAPHORE USAGE**:
+- Prefer dispatcher-backed concurrency limits for orchestrators; semaphores should only appear when a dispatcher cannot control I/O occupancy directly.
+- Never use a semaphore to guard helper state (e.g., progress counters); that is the dispatcher’s job and was the impetus for this guideline.
+- If a semaphore remains, isolate it to the controller (like `FileIOCoordinator`) and document why dispatcher-based limiting wasn’t sufficient.
+
 ---
 
 ## Code Quality Checklist
