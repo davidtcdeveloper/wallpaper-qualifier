@@ -2,15 +2,14 @@ package com.wallpaperqualifier.config
 
 import com.wallpaperqualifier.domain.ConfigurationException
 import com.wallpaperqualifier.domain.Result
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
  * Loads, validates, and parses JSON configuration files.
  */
-object ConfigParser {
-
-    private val json = Json { ignoreUnknownKeys = true }
+class ConfigParser(private val json: Json = Json { ignoreUnknownKeys = false }) {
 
     /**
      * Parses a configuration file and returns the parsed AppConfig.
@@ -60,17 +59,20 @@ object ConfigParser {
     fun parseJson(json: String): Result<AppConfig> {
         return try {
             val config = this.json.decodeFromString(AppConfig.serializer(), json)
-            
-            // Validate required fields
+
             val validation = validateConfig(config)
             if (validation is Result.Failure) {
-                return validation as Result<AppConfig>
+                return Result.Failure(validation.error)
             }
-            
+
             Result.Success(config)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: SerializationException) {
             Result.Failure(
                 ConfigurationException("Invalid JSON format: ${e.message}", e)
+            )
+        } catch (e: IllegalArgumentException) {
+            Result.Failure(
+                ConfigurationException("Invalid configuration value: ${e.message}", e)
             )
         } catch (e: Exception) {
             Result.Failure(
@@ -79,41 +81,33 @@ object ConfigParser {
         }
     }
 
-    /**
-     * Validates configuration values.
-     *
-     * @param config Configuration to validate
-     * @return Result indicating validation success or failure
-     */
     private fun validateConfig(config: AppConfig): Result<Unit> {
         val errors = mutableListOf<String>()
 
-        // Validate folders
         if (config.folders.samples.isBlank()) {
             errors.add("folders.samples path cannot be empty")
+        } else {
+            errors += folderValidationErrors(config.folders.samples, "folders.samples", requireWritable = false)
         }
+
         if (config.folders.candidates.isBlank()) {
             errors.add("folders.candidates path cannot be empty")
+        } else {
+            errors += folderValidationErrors(config.folders.candidates, "folders.candidates", requireWritable = false)
         }
+
         if (config.folders.output.isBlank()) {
             errors.add("folders.output path cannot be empty")
+        } else {
+            errors += folderValidationErrors(config.folders.output, "folders.output", requireWritable = true)
         }
+
         if (config.folders.temp.isBlank()) {
             errors.add("folders.temp path cannot be empty")
+        } else {
+            errors += folderValidationErrors(config.folders.temp, "folders.temp", requireWritable = true)
         }
 
-        // Validate folders exist (optional: may be created if missing)
-        val sampleDir = File(config.folders.samples)
-        if (!sampleDir.exists()) {
-            errors.add("Sample folder does not exist: ${config.folders.samples}")
-        }
-
-        val candidateDir = File(config.folders.candidates)
-        if (!candidateDir.exists()) {
-            errors.add("Candidate folder does not exist: ${config.folders.candidates}")
-        }
-
-        // Validate LLM config
         if (config.llm.endpoint.isBlank()) {
             errors.add("llm.endpoint cannot be empty")
         }
@@ -121,7 +115,6 @@ object ConfigParser {
             errors.add("llm.model cannot be empty")
         }
 
-        // Validate processing config
         if (config.processing.maxParallelTasks < 1 || config.processing.maxParallelTasks > 128) {
             errors.add("processing.maxParallelTasks must be between 1 and 128, got ${config.processing.maxParallelTasks}")
         }
@@ -141,5 +134,30 @@ object ConfigParser {
                 ConfigurationException("Configuration validation failed:\n${errors.joinToString("\n")}")
             )
         }
+    }
+
+    private fun folderValidationErrors(path: String, fieldName: String, requireWritable: Boolean): List<String> {
+        val folder = File(path)
+        val errors = mutableListOf<String>()
+
+        if (!folder.exists()) {
+            errors.add("$fieldName does not exist: $path")
+            return errors
+        }
+
+        if (!folder.isDirectory) {
+            errors.add("$fieldName is not a directory: $path")
+            return errors
+        }
+
+        if (!folder.canRead()) {
+            errors.add("$fieldName is not readable: $path")
+        }
+
+        if (requireWritable && !folder.canWrite()) {
+            errors.add("$fieldName is not writable: $path")
+        }
+
+        return errors
     }
 }

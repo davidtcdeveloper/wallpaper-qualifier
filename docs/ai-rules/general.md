@@ -288,6 +288,32 @@ class ImageAnalyzer {
 ```
 </rule_7>
 
+<rule_8 priority="LOW">
+**CLASSES OVER OBJECTS**: Favor instantiable classes for behavior-driving components instead of Kotlin `object` singletons.
+- Improves testability: each test can get a fresh instance with predictable state.
+- Encourages dependency injection and constructor configuration instead of hidden globals.
+- Makes it easier to swap implementations and control lifecycle (init, cleanup).
+
+**MUST**:
+- ✓ Convert CLI parsers, workflow orchestration, and services that carry mutable state to classes.
+- ✓ Keep `object`s limited to true constants (`const val`, compile-time data) or marker utilities with no dependencies.
+- ✓ State why a single `object` is acceptable when one is used (e.g., extension registry).
+
+**Example - Good**:
+```kotlin
+class ArgumentParser(private val env: Environment = Environment.current()) {
+    fun parse(args: Array<String>): ParsedArgs { /* ... */ }
+}
+```
+
+**Example - Avoid**:
+```kotlin
+object ArgumentParser {
+    fun parse(args: Array<String>) { /* hidden globals, hard to test */ }
+}
+```
+</rule_8>
+
 ---
 
 ## Code Quality Checklist

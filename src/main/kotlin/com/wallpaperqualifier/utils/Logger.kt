@@ -14,10 +14,13 @@ enum class LogLevel {
  * Simple logging interface for the application.
  * Outputs to stdout for info/debug, stderr for warnings/errors.
  */
-object Logger {
-    
+class Logger(
+    private val output: java.io.PrintStream = System.out,
+    private val errorOutput: java.io.PrintStream = System.err,
+    private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+) {
+
     private var verboseMode = false
-    private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     /**
      * Enable verbose logging (includes DEBUG level).
@@ -33,7 +36,7 @@ object Logger {
      */
     fun debug(message: String) {
         if (verboseMode) {
-            log(LogLevel.DEBUG, message, System.out)
+            log(LogLevel.DEBUG, message, output)
         }
     }
 
@@ -43,7 +46,7 @@ object Logger {
      * @param message The message to log
      */
     fun info(message: String) {
-        log(LogLevel.INFO, message, System.out)
+        log(LogLevel.INFO, message, output)
     }
 
     /**
@@ -52,7 +55,7 @@ object Logger {
      * @param message The message to log
      */
     fun warn(message: String) {
-        log(LogLevel.WARN, message, System.err)
+        log(LogLevel.WARN, message, errorOutput)
     }
 
     /**
@@ -62,9 +65,9 @@ object Logger {
      * @param throwable Optional exception to log
      */
     fun error(message: String, throwable: Throwable? = null) {
-        log(LogLevel.ERROR, message, System.err)
+        log(LogLevel.ERROR, message, errorOutput)
         if (throwable != null && verboseMode) {
-            throwable.printStackTrace(System.err)
+            throwable.printStackTrace(errorOutput)
         }
     }
 
@@ -73,11 +76,11 @@ object Logger {
      *
      * @param level The log level
      * @param message The message to log
-     * @param output The output stream (System.out or System.err)
+     * @param stream The output stream (stdout or stderr)
      */
-    private fun log(level: LogLevel, message: String, output: java.io.PrintStream) {
+    private fun log(level: LogLevel, message: String, stream: java.io.PrintStream) {
         val timestamp = LocalDateTime.now().format(dateTimeFormatter)
         val formattedMessage = "[$timestamp] [${level.name}] $message"
-        output.println(formattedMessage)
+        stream.println(formattedMessage)
     }
 }

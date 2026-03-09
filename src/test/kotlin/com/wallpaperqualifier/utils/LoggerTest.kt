@@ -3,8 +3,8 @@ package com.wallpaperqualifier.utils
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.Test
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class LoggerTest {
 
@@ -13,10 +13,12 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.info("Test info message")
-            
+            logger.info("Test info message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("Test info message"))
             assertTrue(output.contains("[INFO]"))
@@ -30,10 +32,12 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldErr = System.err
         System.setErr(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.warn("Test warning message")
-            
+            logger.warn("Test warning message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("Test warning message"))
             assertTrue(output.contains("[WARN]"))
@@ -47,10 +51,12 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldErr = System.err
         System.setErr(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.error("Test error message")
-            
+            logger.error("Test error message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("Test error message"))
             assertTrue(output.contains("[ERROR]"))
@@ -64,11 +70,13 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.setVerbose(false)
-            Logger.debug("Test debug message")
-            
+            logger.setVerbose(false)
+            logger.debug("Test debug message")
+
             val output = outputCapture.toString()
             assertFalse(output.contains("Test debug message"))
         } finally {
@@ -81,17 +89,18 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.setVerbose(true)
-            Logger.debug("Test debug message")
-            
+            logger.setVerbose(true)
+            logger.debug("Test debug message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("Test debug message"))
             assertTrue(output.contains("[DEBUG]"))
         } finally {
             System.setOut(oldOut)
-            Logger.setVerbose(false)
         }
     }
 
@@ -100,12 +109,13 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.info("Timestamped message")
-            
+            logger.info("Timestamped message")
+
             val output = outputCapture.toString()
-            // Should contain date-time pattern
             assertTrue(output.contains("-") && output.contains(":"))
         } finally {
             System.setOut(oldOut)
@@ -117,10 +127,12 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.info("Leveled message")
-            
+            logger.info("Leveled message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("[INFO]"))
         } finally {
@@ -133,18 +145,19 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldErr = System.err
         System.setErr(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.setVerbose(true)
+            logger.setVerbose(true)
             val exception = Exception("Test exception")
-            Logger.error("Error with exception", exception)
-            
+            logger.error("Error with exception", exception)
+
             val output = outputCapture.toString()
             assertTrue(output.contains("Error with exception"))
             assertTrue(output.contains("Test exception"))
         } finally {
             System.setErr(oldErr)
-            Logger.setVerbose(false)
         }
     }
 
@@ -153,12 +166,14 @@ class LoggerTest {
         val outputCapture = ByteArrayOutputStream()
         val oldOut = System.out
         System.setOut(PrintStream(outputCapture))
-        
+
+        val logger = Logger()
+
         try {
-            Logger.info("First message")
-            Logger.info("Second message")
-            Logger.info("Third message")
-            
+            logger.info("First message")
+            logger.info("Second message")
+            logger.info("Third message")
+
             val output = outputCapture.toString()
             assertTrue(output.contains("First message"))
             assertTrue(output.contains("Second message"))

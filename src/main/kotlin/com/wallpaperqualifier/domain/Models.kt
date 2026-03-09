@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 enum class ImageFormat {
-    JPEG, PNG, HEIC, WEBP, TIFF, BMP, GIF, RAW
+    JPEG, PNG, HEIC, WEBP, TIFF, BMP, GIF, RAW, UNKNOWN
 }
 
 /**

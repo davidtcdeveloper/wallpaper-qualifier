@@ -11,16 +11,18 @@ import com.wallpaperqualifier.utils.Logger
  * Main entry point for Wallpaper Qualifier application.
  */
 fun main(args: Array<String>) {
-    // Enable verbose mode for debugging (can be made configurable)
-    val verbose = args.contains("--verbose") || args.contains("-v")
-    if (verbose) {
-        Logger.setVerbose(true)
-        Logger.debug("Verbose mode enabled")
+    val logger = Logger()
+    val argumentParser = ArgumentParser()
+    val configParser = ConfigParser()
+
+    val verboseRequested = argumentParser.hasVerboseFlag(args)
+    if (verboseRequested) {
+        logger.setVerbose(true)
+        logger.debug("Verbose mode enabled")
     }
 
-    // Parse arguments
-    Logger.debug("Parsing arguments: ${args.joinToString(", ")}")
-    val parseResult = ArgumentParser.parse(args)
+    logger.debug("Parsing arguments: ${args.joinToString(", ")}")
+    val parseResult = argumentParser.parse(args)
 
     when (parseResult) {
         is com.wallpaperqualifier.domain.Result.Success -> {
@@ -32,12 +34,13 @@ fun main(args: Array<String>) {
                     println("Wallpaper Qualifier v$VERSION")
                 }
                 is ParsedArgs.RunWithConfig -> {
-                    runWithConfig(parsedArgs.configPath)
+                    logger.setVerbose(parsedArgs.verbose)
+                    runWithConfig(parsedArgs.configPath, configParser, logger)
                 }
             }
         }
         is com.wallpaperqualifier.domain.Result.Failure -> {
-            Logger.error("Failed to parse arguments: ${parseResult.error.message}")
+            logger.error("Failed to parse arguments: ${parseResult.error.message}")
             System.err.println("\nUse --help for usage information")
             System.exit(1)
         }
@@ -48,28 +51,30 @@ fun main(args: Array<String>) {
  * Run the application with a configuration file.
  *
  * @param configPath Path to the configuration file
+ * @param configParser Parser instance used to load the config
+ * @param logger Logger instance for reporting status
  */
-private fun runWithConfig(configPath: String) {
-    Logger.info("Loading configuration from: $configPath")
+private fun runWithConfig(configPath: String, configParser: ConfigParser, logger: Logger) {
+    logger.info("Loading configuration from: $configPath")
 
-    val configResult = ConfigParser.parseFile(configPath)
+    val configResult = configParser.parseFile(configPath)
 
     when (configResult) {
         is com.wallpaperqualifier.domain.Result.Success -> {
             val config = configResult.value
-            Logger.info("Configuration loaded successfully")
-            Logger.debug("Samples folder: ${config.folders.samples}")
-            Logger.debug("Candidates folder: ${config.folders.candidates}")
-            Logger.debug("Output folder: ${config.folders.output}")
-            Logger.debug("LLM endpoint: ${config.llm.endpoint}")
-            Logger.debug("LLM model: ${config.llm.model}")
-            Logger.debug("Max parallel tasks: ${config.processing.maxParallelTasks}")
+            logger.info("Configuration loaded successfully")
+            logger.debug("Samples folder: ${config.folders.samples}")
+            logger.debug("Candidates folder: ${config.folders.candidates}")
+            logger.debug("Output folder: ${config.folders.output}")
+            logger.debug("LLM endpoint: ${config.llm.endpoint}")
+            logger.debug("LLM model: ${config.llm.model}")
+            logger.debug("Max parallel tasks: ${config.processing.maxParallelTasks}")
 
-            Logger.info("Wallpaper Qualifier initialized successfully")
+            logger.info("Wallpaper Qualifier initialized successfully")
             // TODO: Implement main workflow orchestration
         }
         is com.wallpaperqualifier.domain.Result.Failure -> {
-            Logger.error("Failed to load configuration: ${configResult.error.message}")
+            logger.error("Failed to load configuration: ${configResult.error.message}")
             System.exit(1)
         }
     }

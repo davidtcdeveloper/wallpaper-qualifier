@@ -9,6 +9,8 @@ import kotlin.test.assertTrue
 
 class ConfigParserTest {
 
+    private val parser = ConfigParser()
+
     private val validConfigJson = """
         {
             "folders": {
@@ -31,7 +33,7 @@ class ConfigParserTest {
 
     @Test
     fun testParseValidJson() {
-        val result = ConfigParser.parseJson(validConfigJson)
+        val result = parser.parseJson(validConfigJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         val config = (result as com.wallpaperqualifier.domain.Result.Success).value
@@ -60,7 +62,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(minimalConfigJson)
+        val result = parser.parseJson(minimalConfigJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         val config = (result as com.wallpaperqualifier.domain.Result.Success).value
@@ -77,7 +79,7 @@ class ConfigParserTest {
     fun testParseInvalidJson() {
         val invalidJson = "{ invalid json }"
         
-        val result = ConfigParser.parseJson(invalidJson)
+        val result = parser.parseJson(invalidJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -95,7 +97,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(missingFoldersJson)
+        val result = parser.parseJson(missingFoldersJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
     }
@@ -113,7 +115,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(emptyFoldersJson)
+        val result = parser.parseJson(emptyFoldersJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -136,7 +138,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(invalidParallelJson)
+        val result = parser.parseJson(invalidParallelJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -159,7 +161,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(invalidQualityJson)
+        val result = parser.parseJson(invalidQualityJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -182,7 +184,7 @@ class ConfigParserTest {
             }
         """.trimIndent()
         
-        val result = ConfigParser.parseJson(invalidFormatJson)
+        val result = parser.parseJson(invalidFormatJson)
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -196,7 +198,7 @@ class ConfigParserTest {
         tempFile.writeText(validConfigJson)
         
         try {
-            val result = ConfigParser.parseFile(tempFile.absolutePath)
+            val result = parser.parseFile(tempFile.absolutePath)
             
             assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
             val config = (result as com.wallpaperqualifier.domain.Result.Success).value
@@ -208,7 +210,7 @@ class ConfigParserTest {
 
     @Test
     fun testParseFileNotFound() {
-        val result = ConfigParser.parseFile("/nonexistent/config.json")
+        val result = parser.parseFile("/nonexistent/config.json")
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -220,7 +222,7 @@ class ConfigParserTest {
         val tempDir = Files.createTempDirectory("test-config-dir").toFile()
         
         try {
-            val result = ConfigParser.parseFile(tempDir.absolutePath)
+            val result = parser.parseFile(tempDir.absolutePath)
             
             assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
             val error = (result as com.wallpaperqualifier.domain.Result.Failure).error

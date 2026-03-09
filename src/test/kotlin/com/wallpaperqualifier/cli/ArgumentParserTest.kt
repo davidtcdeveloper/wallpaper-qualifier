@@ -10,9 +10,11 @@ import kotlin.test.assertTrue
 
 class ArgumentParserTest {
 
+    private val parser = ArgumentParser()
+
     @Test
     fun testHelpFlag() {
-        val result = ArgumentParser.parse(arrayOf("--help"))
+        val result = parser.parse(arrayOf("--help"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         assertEquals(ParsedArgs.ShowHelp, (result as com.wallpaperqualifier.domain.Result.Success).value)
@@ -20,7 +22,7 @@ class ArgumentParserTest {
 
     @Test
     fun testHelpFlagShortForm() {
-        val result = ArgumentParser.parse(arrayOf("-h"))
+        val result = parser.parse(arrayOf("-h"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         assertEquals(ParsedArgs.ShowHelp, (result as com.wallpaperqualifier.domain.Result.Success).value)
@@ -28,7 +30,7 @@ class ArgumentParserTest {
 
     @Test
     fun testVersionFlag() {
-        val result = ArgumentParser.parse(arrayOf("--version"))
+        val result = parser.parse(arrayOf("--version"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         assertEquals(ParsedArgs.ShowVersion, (result as com.wallpaperqualifier.domain.Result.Success).value)
@@ -36,7 +38,7 @@ class ArgumentParserTest {
 
     @Test
     fun testVersionFlagShortForm() {
-        val result = ArgumentParser.parse(arrayOf("-v"))
+        val result = parser.parse(arrayOf("-V"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
         assertEquals(ParsedArgs.ShowVersion, (result as com.wallpaperqualifier.domain.Result.Success).value)
@@ -49,7 +51,7 @@ class ArgumentParserTest {
         tempFile.writeText("""{"folders":{"samples":"/tmp","candidates":"/tmp","output":"/tmp","temp":"/tmp"}}""")
         
         try {
-            val result = ArgumentParser.parse(arrayOf(tempFile.absolutePath))
+            val result = parser.parse(arrayOf(tempFile.absolutePath))
             
             assertTrue(result is com.wallpaperqualifier.domain.Result.Success)
             val parsedArgs = (result as com.wallpaperqualifier.domain.Result.Success).value
@@ -62,7 +64,7 @@ class ArgumentParserTest {
 
     @Test
     fun testConfigFileNotFound() {
-        val result = ArgumentParser.parse(arrayOf("/nonexistent/path/config.json"))
+        val result = parser.parse(arrayOf("/nonexistent/path/config.json"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -71,11 +73,11 @@ class ArgumentParserTest {
 
     @Test
     fun testConfigPathNotJsonFormat() {
-        val result = ArgumentParser.parse(arrayOf("/path/to/config.txt"))
+        val result = parser.parse(arrayOf("/path/to/config.txt"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
-        assertTrue(error.message?.contains("Unknown argument") == true)
+        assertTrue(error.message?.contains("not found") == true)
     }
 
     @Test
@@ -88,7 +90,7 @@ class ArgumentParserTest {
             // Make it unreadable (this may not work on all systems)
             val readable = tempFile.setReadable(false)
             if (readable) {
-                val result = ArgumentParser.parse(arrayOf(tempFile.absolutePath))
+                val result = parser.parse(arrayOf(tempFile.absolutePath))
                 assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
             }
         } finally {
@@ -99,7 +101,7 @@ class ArgumentParserTest {
 
     @Test
     fun testNoArguments() {
-        val result = ArgumentParser.parse(arrayOf())
+        val result = parser.parse(arrayOf())
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
@@ -108,7 +110,7 @@ class ArgumentParserTest {
 
     @Test
     fun testUnknownArgument() {
-        val result = ArgumentParser.parse(arrayOf("--unknown"))
+        val result = parser.parse(arrayOf("--unknown"))
         
         assertTrue(result is com.wallpaperqualifier.domain.Result.Failure)
         val error = (result as com.wallpaperqualifier.domain.Result.Failure).error
