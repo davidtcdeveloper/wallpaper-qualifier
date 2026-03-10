@@ -14,12 +14,11 @@ import java.util.concurrent.Executors
 class FileIOCoordinator(
     private val logger: Logger,
     private val maxThreads: Int = 8,
-    private val batchSize: Int = 100
-) {
-
+    private val batchSize: Int = 100,
     private val workerDispatcher: ExecutorCoroutineDispatcher =
-        Executors.newFixedThreadPool(maxThreads).asCoroutineDispatcher()
-    private val progressReporter = ProgressReporter(logger)
+        Executors.newFixedThreadPool(maxThreads).asCoroutineDispatcher(),
+    private val progressReporter: ProgressReporter = ProgressReporter(logger)
+) {
 
     private data class ProcessingOutcome<T>(
         val path: String,

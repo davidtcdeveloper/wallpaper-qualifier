@@ -12,9 +12,12 @@ import kotlinx.coroutines.newSingleThreadContext
  * Provides feedback on current phase, completion percentage, and ETA.
  * Runs entirely on a dedicated single-thread dispatcher instead of synchronized blocks.
  */
-class ProgressReporter(private val logger: Logger) {
+class ProgressReporter(
+    private val logger: Logger,
+    private val dispatcher: ExecutorCoroutineDispatcher = newSingleThreadContext("progress-reporter"),
+    private val closeDispatcherOnShutdown: Boolean = true
+) {
 
-    private val dispatcher: ExecutorCoroutineDispatcher = newSingleThreadContext("progress-reporter")
     private var startTime: Long = 0
     private var totalItems: Int = 0
     private var processedItems: Int = 0
@@ -90,7 +93,9 @@ class ProgressReporter(private val logger: Logger) {
      * Forcefully release dispatcher resources.
      */
     fun shutdown() {
-        dispatcher.close()
+        if (closeDispatcherOnShutdown) {
+            dispatcher.close()
+        }
     }
 
     /**
