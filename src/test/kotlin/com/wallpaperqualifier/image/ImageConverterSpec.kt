@@ -12,6 +12,7 @@ import javax.imageio.ImageIO
 class ImageConverterSpec : FunSpec({
 
     val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val converter = ImageConverter()
 
     fun createTestImage(filename: String, format: String = "PNG", width: Int = 128, height: Int = 128): File {
         val file = File(testDir, filename)
@@ -26,7 +27,7 @@ class ImageConverterSpec : FunSpec({
         val target = File.createTempFile("converter-png-", ".jpg")
 
         try {
-            val result = ImageConverter.convertImage(
+            val result = converter.convertImage(
                 source.absolutePath,
                 target.absolutePath,
                 config = ImageConverter.ConversionConfig(targetFormat = ImageConverter.TargetFormat.JPEG)
@@ -46,7 +47,7 @@ class ImageConverterSpec : FunSpec({
         val target = File.createTempFile("converter-jpeg-", ".png")
 
         try {
-            val result = ImageConverter.convertImage(
+            val result = converter.convertImage(
                 source.absolutePath,
                 target.absolutePath,
                 config = ImageConverter.ConversionConfig(targetFormat = ImageConverter.TargetFormat.PNG)
@@ -66,7 +67,7 @@ class ImageConverterSpec : FunSpec({
         val target = File.createTempFile("converter-fail-", ".jpg")
 
         try {
-            val result = ImageConverter.convertImage(
+            val result = converter.convertImage(
                 source.absolutePath,
                 target.absolutePath,
                 config = ImageConverter.ConversionConfig(

@@ -10,6 +10,7 @@ import java.io.File
 class DuplicateDetectorSpec : FunSpec({
 
     val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val detector = DuplicateDetector()
 
     fun createTestFile(filename: String, content: String = "test content"): File {
         val file = File(testDir, filename)
@@ -20,7 +21,7 @@ class DuplicateDetectorSpec : FunSpec({
     test("computes SHA-256 hash for a file") {
         val file = createTestFile("hash-test.txt", "test content")
 
-        val hash = DuplicateDetector.computeFileHash(file.absolutePath)
+        val hash = detector.computeFileHash(file.absolutePath)
             .shouldBeInstanceOf<Result.Success<String>>()
             .value
 
@@ -31,11 +32,11 @@ class DuplicateDetectorSpec : FunSpec({
         val file1 = createTestFile("file1.txt", "same content")
         val file2 = createTestFile("file2.txt", "same content")
 
-        val hash1 = DuplicateDetector.computeFileHash(file1.absolutePath)
+        val hash1 = detector.computeFileHash(file1.absolutePath)
             .shouldBeInstanceOf<Result.Success<String>>()
             .value
 
-        val hash2 = DuplicateDetector.computeFileHash(file2.absolutePath)
+        val hash2 = detector.computeFileHash(file2.absolutePath)
             .shouldBeInstanceOf<Result.Success<String>>()
             .value
 
@@ -46,11 +47,11 @@ class DuplicateDetectorSpec : FunSpec({
         val file1 = createTestFile("diff1.txt", "content 1")
         val file2 = createTestFile("diff2.txt", "content 2")
 
-        val hash1 = DuplicateDetector.computeFileHash(file1.absolutePath)
+        val hash1 = detector.computeFileHash(file1.absolutePath)
             .shouldBeInstanceOf<Result.Success<String>>()
             .value
 
-        val hash2 = DuplicateDetector.computeFileHash(file2.absolutePath)
+        val hash2 = detector.computeFileHash(file2.absolutePath)
             .shouldBeInstanceOf<Result.Success<String>>()
             .value
 
@@ -62,7 +63,7 @@ class DuplicateDetectorSpec : FunSpec({
         val file2 = createTestFile("dup2.txt", "duplicate content")
         val file3 = createTestFile("unique.txt", "unique content")
 
-        val duplicates = DuplicateDetector.findDuplicates(listOf(file1.absolutePath, file2.absolutePath, file3.absolutePath))
+        val duplicates = detector.findDuplicates(listOf(file1.absolutePath, file2.absolutePath, file3.absolutePath))
             .shouldBeInstanceOf<Result.Success<Map<String, List<String>>>>()
             .value
 
@@ -74,7 +75,7 @@ class DuplicateDetectorSpec : FunSpec({
         val file1 = createTestFile("identical1.txt", "same")
         val file2 = createTestFile("identical2.txt", "same")
 
-        val result = DuplicateDetector.areIdentical(file1.absolutePath, file2.absolutePath)
+        val result = detector.areIdentical(file1.absolutePath, file2.absolutePath)
             .shouldBeInstanceOf<Result.Success<Boolean>>()
             .value
 

@@ -10,7 +10,7 @@ import javax.imageio.ImageIO
  * Extracts detailed metadata from image files.
  * Includes resolution, aspect ratio, color depth, bit depth, file size, etc.
  */
-object ImageMetadataExtractor {
+class ImageMetadataExtractor {
 
     data class DetailedMetadata(
         val path: String,

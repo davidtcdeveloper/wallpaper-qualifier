@@ -9,9 +9,15 @@ import java.security.MessageDigest
  * Detects duplicate or near-identical images using file hash.
  * Uses SHA-256 for exact duplicate detection (fast, efficient).
  */
-object DuplicateDetector {
+class DuplicateDetector(
+    private val digestFactory: () -> MessageDigest = { MessageDigest.getInstance("SHA-256") }
+) {
 
-    private const val BUFFER_SIZE = 8192
+    companion object {
+        private const val BUFFER_SIZE = 8192
+    }
+
+    private fun newDigest(): MessageDigest = digestFactory()
 
     /**
      * Compute SHA-256 hash of a file.
@@ -35,7 +41,7 @@ object DuplicateDetector {
                 )
             }
 
-            val messageDigest = MessageDigest.getInstance("SHA-256")
+            val messageDigest = newDigest()
             val buffer = ByteArray(BUFFER_SIZE)
 
             file.inputStream().use { fis ->

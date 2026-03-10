@@ -15,6 +15,7 @@ import javax.imageio.ImageIO
 class ImageMetadataExtractorSpec : FunSpec({
 
     val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val extractor = ImageMetadataExtractor()
 
     fun createTestImage(filename: String, width: Int = 1920, height: Int = 1080): File {
         val file = File(testDir, filename)
@@ -26,7 +27,7 @@ class ImageMetadataExtractorSpec : FunSpec({
     test("extracts metadata for valid image") {
         val imageFile = createTestImage("metadata-test.png", 1024, 768)
 
-        val metadata = ImageMetadataExtractor.extractMetadata(imageFile.absolutePath)
+        val metadata = extractor.extractMetadata(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadataExtractor.DetailedMetadata>>()
             .value
 
@@ -36,29 +37,29 @@ class ImageMetadataExtractorSpec : FunSpec({
     }
 
     test("fails metadata extraction for nonexistent file") {
-        ImageMetadataExtractor.extractMetadata("/nonexistent/image.png")
+        extractor.extractMetadata("/nonexistent/image.png")
             .shouldBeInstanceOf<Result.Failure<ImageMetadataExtractor.DetailedMetadata>>()
     }
 
     test("validates resolution requirement") {
         val imageFile = createTestImage("resolution-test.png", 1920, 1080)
 
-        val metadata = ImageMetadataExtractor.extractMetadata(imageFile.absolutePath)
+        val metadata = extractor.extractMetadata(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadataExtractor.DetailedMetadata>>()
             .value
 
-        ImageMetadataExtractor.meetsResolutionRequirement(metadata, 1920, 1080) shouldBe true
-        ImageMetadataExtractor.meetsResolutionRequirement(metadata, 3840, 2160) shouldBe false
+        extractor.meetsResolutionRequirement(metadata, 1920, 1080) shouldBe true
+        extractor.meetsResolutionRequirement(metadata, 3840, 2160) shouldBe false
     }
 
     test("estimates quality score between 0 and 1") {
         val imageFile = createTestImage("quality-test.png", 1920, 1080)
 
-        val metadata = ImageMetadataExtractor.extractMetadata(imageFile.absolutePath)
+        val metadata = extractor.extractMetadata(imageFile.absolutePath)
             .shouldBeInstanceOf<Result.Success<ImageMetadataExtractor.DetailedMetadata>>()
             .value
 
-        val score = ImageMetadataExtractor.estimateQualityScore(metadata)
+        val score = extractor.estimateQualityScore(metadata)
         score.shouldBeGreaterThan(0f)
         score.shouldBeLessThan(1f)
     }
@@ -67,7 +68,7 @@ class ImageMetadataExtractorSpec : FunSpec({
         val file1 = createTestImage("batch1.png", 800, 600)
         val file2 = createTestImage("batch2.png", 1024, 768)
 
-        val metadata = ImageMetadataExtractor.extractMetadataBatch(listOf(file1.absolutePath, file2.absolutePath))
+        val metadata = extractor.extractMetadataBatch(listOf(file1.absolutePath, file2.absolutePath))
             .shouldBeInstanceOf<Result.Success<List<ImageMetadataExtractor.DetailedMetadata>>>()
             .value
 

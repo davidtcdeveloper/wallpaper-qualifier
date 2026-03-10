@@ -5,20 +5,20 @@ import com.wallpaperqualifier.domain.Result
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
-import javax.imageio.ImageWriteParam
-import javax.imageio.ImageWriter
 import kotlin.math.min
 
 /**
  * Converts images between formats, typically to JPEG or PNG for LLM processing.
  * Handles aspect ratio preservation, quality optimization, and file size management.
  */
-object ImageConverter {
+class ImageConverter {
 
-    const val DEFAULT_JPEG_QUALITY = 85
-    const val PNG_COMPRESSION_LEVEL = 9
-    const val MAX_FILE_SIZE_BYTES = 2_097_152 // 2MB
-    const val MAX_DIMENSION_PIXELS = 4096
+    companion object {
+        const val DEFAULT_JPEG_QUALITY = 85
+        const val PNG_COMPRESSION_LEVEL = 9
+        const val MAX_FILE_SIZE_BYTES = 2_097_152 // 2MB
+        const val MAX_DIMENSION_PIXELS = 4096
+    }
 
     enum class TargetFormat {
         JPEG, PNG
@@ -105,7 +105,7 @@ object ImageConverter {
      * Resize image to fit within max dimension while preserving aspect ratio.
      */
     private fun resizeImage(sourceImage: BufferedImage, maxDimension: Int): BufferedImage {
-        val scaleFactor = minOf(
+        val scaleFactor = min(
             maxDimension.toDouble() / sourceImage.width,
             maxDimension.toDouble() / sourceImage.height
         )

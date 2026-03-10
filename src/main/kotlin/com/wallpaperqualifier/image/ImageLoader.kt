@@ -1,7 +1,6 @@
 package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.Image
-import com.wallpaperqualifier.domain.ImageFormat
 import com.wallpaperqualifier.domain.ImageProcessingException
 import com.wallpaperqualifier.domain.Result
 import com.wallpaperqualifier.utils.Logger
@@ -11,7 +10,11 @@ import java.io.File
  * Loads images from a directory recursively and returns Image objects with metadata.
  * Handles format filtering, error recovery, and progress reporting.
  */
-class ImageLoader(private val logger: Logger, private val proto: ImageLoaderProto) {
+class ImageLoader(
+    private val logger: Logger,
+    private val proto: ImageLoaderProto,
+    private val formatDetector: FormatDetector = FormatDetector()
+) {
 
     /**
      * Discover all images in a folder recursively.
@@ -77,13 +80,13 @@ class ImageLoader(private val logger: Logger, private val proto: ImageLoaderProt
      */
     private fun loadImageFile(imagePath: String): Result<Image> {
         // Validate file
-        val validation = FormatDetector.isValidImageFile(imagePath)
+        val validation = formatDetector.isValidImageFile(imagePath)
         if (validation is Result.Failure) {
             return Result.Failure(validation.error)
         }
 
         // Detect format
-        val formatResult = FormatDetector.detectFormat(imagePath)
+        val formatResult = formatDetector.detectFormat(imagePath)
         if (formatResult is Result.Failure) {
             return Result.Failure(formatResult.error)
         }
@@ -129,7 +132,7 @@ class ImageLoader(private val logger: Logger, private val proto: ImageLoaderProt
      * Check if file has a supported image extension.
      */
     private fun isSupportedImageFile(file: File): Boolean {
-        val supportedExtensions = FormatDetector.getSupportedExtensions()
+        val supportedExtensions = formatDetector.getSupportedExtensions()
         return supportedExtensions.contains(file.extension.lowercase())
     }
 }

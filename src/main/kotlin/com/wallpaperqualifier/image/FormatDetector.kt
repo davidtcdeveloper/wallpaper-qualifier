@@ -9,8 +9,15 @@ import java.io.File
  * Detects image format from file content (magic bytes) and metadata.
  * Prioritizes magic byte detection over file extension for accuracy.
  */
-object FormatDetector {
-    private const val MAGIC_BYTES_TO_READ = 32
+class FormatDetector(private val magicBytesToRead: Int = DEFAULT_MAGIC_BYTES_TO_READ) {
+
+    companion object {
+        private const val DEFAULT_MAGIC_BYTES_TO_READ = 32
+        private val SUPPORTED_EXTENSIONS = listOf(
+            "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff",
+            "webp", "heic", "heif", "cr2", "nef", "arw", "dng"
+        )
+    }
 
     /**
      * Detect image format by examining file magic bytes.
@@ -35,7 +42,7 @@ object FormatDetector {
                 )
             }
 
-            val magicBytes = file.readBytes().take(MAGIC_BYTES_TO_READ).toByteArray()
+            val magicBytes = file.readBytes().take(magicBytesToRead).toByteArray()
 
             // Try magic byte detection first
             val formatFromMagic = detectByMagicBytes(magicBytes)
@@ -173,6 +180,6 @@ object FormatDetector {
      * Get supported file extensions.
      */
     fun getSupportedExtensions(): List<String> {
-        return listOf("jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "cr2", "nef", "arw", "dng")
+        return SUPPORTED_EXTENSIONS
     }
 }
