@@ -146,39 +146,44 @@ fun convertImage(sourcePath: String, targetPath: String) {
 
 **Example - Good**:
 ```kotlin
-object ImageOptimization {
-    const val DEFAULT_JPEG_QUALITY = 85
-    const val PNG_COMPRESSION_LEVEL = 9
-    const val MAX_DIMENSION_PIXELS = 4096
-    const val MAX_FILE_SIZE_BYTES = 2_097_152
-    const val BATCH_SIZE = 100 // Process in chunks of 100 to balance speed and memory
+data class ImageOptimizationConfig(
+    val defaultJpegQuality: Int = 85,
+    val pngCompressionLevel: Int = 9,
+    val maxDimensionPixels: Int = 4096,
+    val maxFileSizeBytes: Int = 2_097_152,
+    val batchSize: Int = 100
+)
+
+class ImageOptimizer(private val config: ImageOptimizationConfig = ImageOptimizationConfig()) {
+    suspend fun optimizeImage(image: Image): OptimizedImage {
+        var working = image
+
+        if (image.width > config.maxDimensionPixels || image.height > config.maxDimensionPixels) {
+            working = working.resizeToFit(config.maxDimensionPixels)
+        }
+
+        working = working.removeMetadata(keep = listOf("exif.orientation"))
+
+        val encoded = when {
+            shouldUseLossy(working) -> JPEGEncoder.encode(working, quality = config.defaultJpegQuality)
+            else -> PNGEncoder.encode(working, compression = config.pngCompressionLevel)
+        }
+
+        if (encoded.sizeBytes > config.maxFileSizeBytes) {
+            throw IllegalStateException("Output exceeds max size: ${encoded.sizeBytes}")
+        }
+
+        return OptimizedImage(encoded, working.format)
+    }
+
+    private fun shouldUseLossy(image: Image): Boolean {
+        return image.hasHighColorVariance()
+    }
 }
 
-suspend fun optimizeImage(image: Image): OptimizedImage {
-    var working = image
-    
-    // 1. Resize if too large
-    if (image.width > ImageOptimization.MAX_DIMENSION_PIXELS ||
-        image.height > ImageOptimization.MAX_DIMENSION_PIXELS) {
-        working = working.resizeToFit(ImageOptimization.MAX_DIMENSION_PIXELS)
-    }
-    
-    // 2. Remove metadata unless needed
-    working = working.removeMetadata(keep = listOf("exif.orientation"))
-    
-    // 3. Encode with quality settings
-    val encoded = when (shouldUseLossy(working)) {
-        true -> JPEGEncoder.encode(working, quality = 85)
-        false -> PNGEncoder.encode(working, compression = 9)
-    }
-    
-    return OptimizedImage(encoded, working.format)
-}
-
-private fun shouldUseLossy(image: Image): Boolean {
-    // Use JPEG for photographs, PNG for graphics
-    return image.hasHighColorVariance()
-}
+// Usage:
+val optimizer = ImageOptimizer()
+val optimized = optimizer.optimizeImage(candidate)
 ```
 
 **Example - Avoid**:

@@ -337,8 +337,8 @@ object ImageUtils {
     fun optimize(image: Image, format: ImageFormat): OptimizedImage { }
 }
 
-// Usage less natural:
-val optimized = ImageUtils.optimize(image, ImageFormat.JPEG)
+// Usage still forces a concrete encoder on every call:
+val optimized = ImageOptimizer().optimize(image, ImageFormat.JPEG)
 ```
 </rule_7>
 

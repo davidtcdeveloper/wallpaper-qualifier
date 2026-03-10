@@ -193,14 +193,43 @@ fun opt(img: Image): Image
 
 **Example - Good**:
 ```kotlin
-object ImageOptimization {
-    const val DEFAULT_JPEG_QUALITY = 85
-    const val MAX_FILE_SIZE_BYTES = 2_097_152 // 2MB
-    const val SUPPORTED_FORMATS = listOf("jpeg", "png", "heic", "webp")
+class ImageOptimizationConfig(
+    val defaultJpegQuality: Int = 85,
+    val pngCompressionLevel: Int = 9,
+    val maxDimensionPixels: Int = 4096,
+    val maxFileSizeBytes: Int = 2_097_152,
+    val batchSize: Int = 100
+) {
+    constructor(maxDimension: Int, fileSizeBytes: Int) : this(
+        defaultJpegQuality = 85,
+        pngCompressionLevel = 9,
+        maxDimensionPixels = maxDimension,
+        maxFileSizeBytes = fileSizeBytes,
+        batchSize = 100
+    )
+}
+
+fun optimizeImage(image: Image, config: ImageOptimizationConfig = ImageOptimizationConfig()): OptimizedImage {
+    var working = image
+
+    if (image.width > config.maxDimensionPixels || image.height > config.maxDimensionPixels) {
+        working = working.resizeToFit(config.maxDimensionPixels)
+    }
+
+    val encoded = when (shouldUseLossy(working)) {
+        true -> JPEGEncoder.encode(working, quality = config.defaultJpegQuality)
+        false -> PNGEncoder.encode(working, compression = config.pngCompressionLevel)
+    }
+
+    if (encoded.sizeBytes > config.maxFileSizeBytes) {
+        throw IllegalStateException("Output exceeds maximum allowed size")
+    }
+
+    return OptimizedImage(encoded, working.format)
 }
 
 // Later in code:
-val optimized = optimizeImage(candidate, quality = ImageOptimization.DEFAULT_JPEG_QUALITY)
+val optimized = optimizeImage(candidate, ImageOptimizationConfig())
 ```
 
 **Example - Avoid**:
@@ -308,8 +337,15 @@ class ArgumentParser(private val env: Environment = Environment.current()) {
 
 **Example - Avoid**:
 ```kotlin
-object ArgumentParser {
+class ArgumentParser private constructor(
+    private val env: Environment = Environment.current()
+) {
     fun parse(args: Array<String>) { /* hidden globals, hard to test */ }
+
+    companion object {
+        // Factory still hides the singleton pattern; prefer injecting Environment explicitly.
+        fun createDefault() = ArgumentParser()
+    }
 }
 ```
 </rule_8>
