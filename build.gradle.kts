@@ -27,6 +27,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.1")
+
+    // HTTP client for LLM integration (LMStudio OpenAI-compatible API)
+    implementation("io.ktor:ktor-client-core:2.3.8")
+    implementation("io.ktor:ktor-client-cio:2.3.8")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
     
     // Test dependencies
     testImplementation(kotlin("test"))
