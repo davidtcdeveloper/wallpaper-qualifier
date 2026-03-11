@@ -65,19 +65,6 @@ class LLMModuleSpec : FunSpec({
 
     test("LLMResponseParser parses valid analysis response from OpenAI-style envelope") {
         val parser = LLMResponseParser()
-        val innerJson =
-            """
-            {
-              "colorPalette": ["#112233", "#445566"],
-              "style": "minimalist",
-              "mood": "calming",
-              "composition": "rule_of_thirds",
-              "subject": "nature",
-              "technicalNotes": "Sharp and well lit",
-              "quality": 0.9
-            }
-            """.trimIndent()
-
         val envelope =
             """
             {
@@ -85,7 +72,10 @@ class LLMModuleSpec : FunSpec({
                 {
                   "message": {
                     "content": [
-                      { "type": "text", "text": ${innerJson.trimIndent()} }
+                      { 
+                        "type": "text", 
+                        "text": "{ \"colorPalette\": [\"#112233\", \"#445566\"], \"style\": \"minimalist\", \"mood\": \"calming\", \"composition\": \"rule_of_thirds\", \"subject\": \"nature\", \"technicalNotes\": \"Sharp and well lit\", \"quality\": 0.9 }"
+                      }
                     ]
                   }
                 }
@@ -103,15 +93,6 @@ class LLMModuleSpec : FunSpec({
 
     test("LLMResponseParser parses valid evaluation response from OpenAI-style envelope") {
         val parser = LLMResponseParser()
-        val innerJson =
-            """
-            {
-              "qualified": true,
-              "confidenceScore": 0.85,
-              "reasoning": "Matches color palette and mood preferences."
-            }
-            """.trimIndent()
-
         val envelope =
             """
             {
@@ -119,7 +100,10 @@ class LLMModuleSpec : FunSpec({
                 {
                   "message": {
                     "content": [
-                      { "type": "text", "text": ${innerJson.trimIndent()} }
+                      { 
+                        "type": "text", 
+                        "text": "{ \"qualified\": true, \"confidenceScore\": 0.85, \"reasoning\": \"Matches color palette and mood preferences.\" }"
+                      }
                     ]
                   }
                 }
