@@ -19,7 +19,8 @@ data class LLMConfig(
 data class ProcessingConfig(
     val maxParallelTasks: Int = 8,
     val outputFormat: String = "original", // "original", "jpeg", "png"
-    val jpegQuality: Int = 90 // 1-100
+    val jpegQuality: Int = 90, // 1-100
+    val confidenceThreshold: Float = 0.5f // 0.0 to 1.0
 )
 
 /**
