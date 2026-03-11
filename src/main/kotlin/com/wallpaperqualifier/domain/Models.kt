@@ -141,7 +141,7 @@ class ConfigurationException(message: String, cause: Throwable? = null) :
 class ImageProcessingException(message: String, cause: Throwable? = null) :
     Exception(message, cause)
 
-class LLMException(message: String, cause: Throwable? = null) :
+open class LLMException(message: String, cause: Throwable? = null) :
     Exception(message, cause)
 
 class FileIOException(message: String, cause: Throwable? = null) :
