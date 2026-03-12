@@ -50,7 +50,7 @@ class SampleAnalysisWorkflowTest : FunSpec({
         val result = workflow.analyzeSamples(samplesDir.absolutePath)
 
         result.shouldBeInstanceOf<Result.Success<*>>()
-        val profile = (result as Result.Success).value
+        val profile = result.value
         profile.sampleCount shouldBe 2
         // FakeLLMService returns 0.5f by default
         profile.averageQuality shouldBe 0.5f

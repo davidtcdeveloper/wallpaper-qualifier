@@ -110,8 +110,8 @@ class DuplicateDetector(
                 hash1Result is Result.Failure -> Result.Failure(hash1Result.error)
                 hash2Result is Result.Failure -> Result.Failure(hash2Result.error)
                 else -> {
-                    val hash1 = (hash1Result as Result.Success).value
-                    val hash2 = (hash2Result as Result.Success).value
+                    val hash1 = hash1Result.value
+                    val hash2 = hash2Result.value
                     Result.Success(hash1 == hash2)
                 }
             }

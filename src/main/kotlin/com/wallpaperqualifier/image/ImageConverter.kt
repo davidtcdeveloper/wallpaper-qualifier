@@ -4,7 +4,9 @@ import com.wallpaperqualifier.domain.ImageProcessingException
 import com.wallpaperqualifier.domain.Result
 import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.IIOImage
 import javax.imageio.ImageIO
+import javax.imageio.ImageWriteParam
 import kotlin.math.min
 
 /**
@@ -128,10 +130,26 @@ class ImageConverter {
      */
     private fun encodeAsJpeg(image: BufferedImage, targetPath: String, quality: Int): Boolean {
         return try {
-            // Fallback to simple write - ImageIO handles quality settings automatically
-            ImageIO.write(image, "jpg", File(targetPath))
+            val writer = ImageIO.getImageWritersByFormatName("jpg").next()
+            val writeParam = writer.defaultWriteParam
+            if (writeParam.canWriteCompressed()) {
+                writeParam.compressionMode = ImageWriteParam.MODE_EXPLICIT
+                writeParam.compressionQuality = quality / 100.0f
+            }
+            
+            File(targetPath).outputStream().use { output ->
+                writer.output = ImageIO.createImageOutputStream(output)
+                writer.write(null, IIOImage(image, null, null), writeParam)
+                writer.dispose()
+            }
+            true
         } catch (e: Exception) {
-            false
+            // Fallback to simple write if complex writer fails
+            try {
+                ImageIO.write(image, "jpg", File(targetPath))
+            } catch (e2: Exception) {
+                false
+            }
         }
     }
 

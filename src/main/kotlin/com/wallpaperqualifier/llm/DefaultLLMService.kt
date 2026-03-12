@@ -41,7 +41,7 @@ class DefaultLLMService(
         if (imageDataUrlResult is Result.Failure) {
             return Result.Failure(imageDataUrlResult.error)
         }
-        val imageDataUrl = (imageDataUrlResult as Result.Success).value
+        val imageDataUrl = imageDataUrlResult.value
 
         val request = LLMRequest(
             messages = listOf(
@@ -71,7 +71,7 @@ class DefaultLLMService(
         if (imageDataUrlResult is Result.Failure) {
             return Result.Failure(imageDataUrlResult.error)
         }
-        val imageDataUrl = (imageDataUrlResult as Result.Success).value
+        val imageDataUrl = imageDataUrlResult.value
 
         val request = LLMRequest(
             messages = listOf(

@@ -86,7 +86,7 @@ class CurationWorkflow(
                 logger.info("✓ Copied: ${sourceFile.name}")
             } else {
                 failed++
-                val error = (outcome as Result.Failure).error
+                val error = outcome.error
                 logger.error("✗ Failed to copy ${sourceFile.name}: ${error.message}")
             }
         }

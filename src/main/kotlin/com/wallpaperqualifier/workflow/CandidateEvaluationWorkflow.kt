@@ -41,7 +41,7 @@ class CandidateEvaluationWorkflow(
         if (discoveryResult is Result.Failure) {
             return Result.Failure(discoveryResult.error)
         }
-        val images = (discoveryResult as Result.Success).value
+        val images = discoveryResult.value
         logger.info("Discovered ${images.size} candidate images")
 
         // 2. Process each image in parallel
@@ -55,12 +55,12 @@ class CandidateEvaluationWorkflow(
             val targetFormat = if (converter.estimateTargetFormat(path) == ImageConverter.TargetFormat.JPEG) "jpg" else "png"
             val tempFileResult = tempFileManager.createTempFile(path, targetFormat)
             if (tempFileResult is Result.Failure) return@processBatch Result.Failure(tempFileResult.error)
-            val tempPath = (tempFileResult as Result.Success).value
+            val tempPath = tempFileResult.value
 
             val conversionResult = converter.convertImage(path, tempPath)
             if (conversionResult is Result.Failure) {
                 tempFileManager.cleanupFile(tempPath)
-                val error = (conversionResult as Result.Failure).error
+                val error = conversionResult.error
                 return@processBatch Result.Failure(Exception("Image conversion failed: ${error.message}", error))
             }
 
@@ -72,12 +72,12 @@ class CandidateEvaluationWorkflow(
             tempFileManager.cleanupFile(tempPath)
             
             if (evaluationResult is Result.Failure) {
-                val error = (evaluationResult as Result.Failure).error
+                val error = evaluationResult.error
                 return@processBatch Result.Failure(Exception("LLM evaluation failed: ${error.message}", error))
             }
             
             // Re-map evaluation result path to original path for curation
-            (evaluationResult as Result.Success).value.copy(imagePath = path).let { Result.Success(it) }
+            evaluationResult.value.copy(imagePath = path).let { Result.Success(it) }
         }
 
         return when (evaluationResults) {
@@ -85,7 +85,7 @@ class CandidateEvaluationWorkflow(
                 logger.info("Successfully evaluated ${evaluationResults.value.size} candidates")
                 Result.Success(evaluationResults.value)
             }
-            is Result.Failure -> Result.Failure((evaluationResults as Result.Failure).error)
+            is Result.Failure -> Result.Failure(evaluationResults.error)
         }
     }
 }

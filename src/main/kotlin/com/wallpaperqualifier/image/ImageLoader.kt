@@ -91,7 +91,7 @@ class ImageLoader(
             return Result.Failure(formatResult.error)
         }
 
-        val format = (formatResult as Result.Success).value
+        val format = formatResult.value
 
         // Load metadata using ImageLoaderProto
         val metadataResult = proto.loadImage(imagePath)
@@ -99,7 +99,7 @@ class ImageLoader(
             return Result.Failure(metadataResult.error)
         }
 
-        val metadata = (metadataResult as Result.Success).value
+        val metadata = metadataResult.value
         val file = File(imagePath)
 
         // Create Image object

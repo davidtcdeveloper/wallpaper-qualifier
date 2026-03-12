@@ -32,7 +32,7 @@ class CurationWorkflowTest : FunSpec({
         val result = workflow.curate(results, outputDir.absolutePath)
 
         result.shouldBeInstanceOf<Result.Success<CurationWorkflow.CurationSummary>>()
-        val summary = (result as Result.Success).value
+        val summary = result.value
         summary.copied shouldBe 1
         summary.qualified shouldBe 1
         
@@ -50,7 +50,8 @@ class CurationWorkflowTest : FunSpec({
 
         val result = workflow.curate(results, outputDir.absolutePath)
 
-        val summary = (result as Result.Success).value
+        result.shouldBeInstanceOf<Result.Success<CurationWorkflow.CurationSummary>>()
+        val summary = result.value
         summary.copied shouldBe 0
         summary.skippedDuplicate shouldBe 1
     }

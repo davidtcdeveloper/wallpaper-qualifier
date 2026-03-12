@@ -6,6 +6,8 @@ import com.wallpaperqualifier.cli.USAGE
 import com.wallpaperqualifier.cli.VERSION
 import com.wallpaperqualifier.config.ConfigParser
 import com.wallpaperqualifier.utils.Logger
+import com.wallpaperqualifier.workflow.WorkflowOrchestrator
+import kotlinx.coroutines.runBlocking
 
 /**
  * Main entry point for Wallpaper Qualifier application.
@@ -71,7 +73,29 @@ private fun runWithConfig(configPath: String, configParser: ConfigParser, logger
             logger.debug("Max parallel tasks: ${config.processing.maxParallelTasks}")
 
             logger.info("Wallpaper Qualifier initialized successfully")
-            // TODO: Implement main workflow orchestration
+            
+            runBlocking {
+                val orchestrator = WorkflowOrchestrator(config, logger)
+                val result = orchestrator.runFullWorkflow()
+                
+                when (result) {
+                    is com.wallpaperqualifier.domain.Result.Success -> {
+                        val summary = result.value
+                        logger.info("Curation Summary:")
+                        logger.info("  Processed: ${summary.totalEvaluated}")
+                        logger.info("  Qualified: ${summary.qualified}")
+                        logger.info("  Rejected:  ${summary.rejected}")
+                        logger.info("  Copied:    ${summary.copied}")
+                        logger.info("  Duplicates:${summary.duplicates}")
+                        logger.info("  Errors:    ${summary.errors}")
+                        logger.info("\nDone! Qualified wallpapers are in: ${config.folders.output}")
+                    }
+                    is com.wallpaperqualifier.domain.Result.Failure -> {
+                        logger.error("Workflow failed: ${result.error.message}")
+                        System.exit(1)
+                    }
+                }
+            }
         }
         is com.wallpaperqualifier.domain.Result.Failure -> {
             logger.error("Failed to load configuration: ${configResult.error.message}")

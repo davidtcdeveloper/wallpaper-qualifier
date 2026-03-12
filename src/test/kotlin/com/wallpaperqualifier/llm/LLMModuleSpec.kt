@@ -86,7 +86,7 @@ class LLMModuleSpec : FunSpec({
         val result = parser.parseAnalysisResponse(envelope)
 
         result.shouldBeInstanceOf<Result.Success<ImageCharacteristics>>()
-        val characteristics = (result as Result.Success).value
+        val characteristics = result.value
         characteristics.style shouldBe "minimalist"
         characteristics.quality shouldBe 0.9f
     }
@@ -114,7 +114,7 @@ class LLMModuleSpec : FunSpec({
         val result = parser.parseEvaluationResponse(envelope, "/tmp/image.jpg")
 
         result.shouldBeInstanceOf<Result.Success<EvaluationResult>>()
-        val evaluation = (result as Result.Success).value
+        val evaluation = result.value
         evaluation.qualified shouldBe true
         evaluation.confidenceScore shouldBe 0.85f
     }

@@ -44,7 +44,7 @@ class SampleAnalysisWorkflow(
         if (discoveryResult is Result.Failure) {
             return Result.Failure(discoveryResult.error)
         }
-        val images = (discoveryResult as Result.Success).value
+        val images = discoveryResult.value
         logger.info("Discovered ${images.size} sample images")
 
         // 2. Process each image in parallel
@@ -58,12 +58,12 @@ class SampleAnalysisWorkflow(
             val targetFormat = if (converter.estimateTargetFormat(path) == ImageConverter.TargetFormat.JPEG) "jpg" else "png"
             val tempFileResult = tempFileManager.createTempFile(path, targetFormat)
             if (tempFileResult is Result.Failure) return@processBatch Result.Failure(tempFileResult.error)
-            val tempPath = (tempFileResult as Result.Success).value
+            val tempPath = tempFileResult.value
 
             val conversionResult = converter.convertImage(path, tempPath)
             if (conversionResult is Result.Failure) {
                 tempFileManager.cleanupFile(tempPath)
-                val error = (conversionResult as Result.Failure).error
+                val error = conversionResult.error
                 return@processBatch Result.Failure(Exception("Image conversion failed: ${error.message}", error))
             }
 
@@ -75,7 +75,7 @@ class SampleAnalysisWorkflow(
             tempFileManager.cleanupFile(tempPath)
             
             if (analysisResult is Result.Failure) {
-                val error = (analysisResult as Result.Failure).error
+                val error = analysisResult.error
                 return@processBatch Result.Failure(Exception("LLM analysis failed: ${error.message}", error))
             }
             
@@ -89,7 +89,7 @@ class SampleAnalysisWorkflow(
                 logger.info("Successfully generated profile from ${characteristics.size} samples")
                 Result.Success(profile)
             }
-            is Result.Failure -> Result.Failure((analysisResults as Result.Failure).error)
+            is Result.Failure -> Result.Failure(analysisResults.error)
         }
     }
 }

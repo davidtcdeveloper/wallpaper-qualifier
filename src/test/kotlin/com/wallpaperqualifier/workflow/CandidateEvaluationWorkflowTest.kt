@@ -65,9 +65,9 @@ class CandidateEvaluationWorkflowTest : FunSpec({
         val result = workflow.evaluateCandidates(candidatesDir.absolutePath, profile)
 
         result.shouldBeInstanceOf<Result.Success<List<EvaluationResult>>>()
-        val evaluations = (result as Result.Success).value
+        val evaluations = result.value
         evaluations shouldHaveSize 1
         evaluations.first().qualified shouldBe true
-        evaluations.first().confidenceScore shouldBe 0.8f // Default from fake if path mismatch in LLM call
+        evaluations.first().confidenceScore shouldBe 0.9f // Now matches correctly in FakeLLMService
     }
 })
