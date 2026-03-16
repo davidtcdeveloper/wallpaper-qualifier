@@ -38,7 +38,7 @@ class ImageMetadataExtractorSpec : FunSpec({
 
     test("fails metadata extraction for nonexistent file") {
         extractor.extractMetadata("/nonexistent/image.png")
-            .shouldBeInstanceOf<Result.Failure<ImageMetadataExtractor.DetailedMetadata>>()
+            .shouldBeInstanceOf<Result.Failure>()
     }
 
     test("validates resolution requirement") {

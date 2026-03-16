@@ -76,7 +76,7 @@ class ImageConverterSpec : FunSpec({
                 )
             )
 
-            result.shouldBeInstanceOf<Result.Failure<String>>()
+            result.shouldBeInstanceOf<Result.Failure>()
             target.exists().shouldBe(false)
         } finally {
             target.delete()

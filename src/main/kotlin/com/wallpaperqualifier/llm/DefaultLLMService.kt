@@ -37,27 +37,13 @@ class DefaultLLMService(
 
     override suspend fun analyzeSampleImage(image: Image): Result<ImageCharacteristics> {
         val promptText = prompts.sampleAnalysisPrompt()
-        val imageDataUrlResult = encodeImageForLLM(image)
-        if (imageDataUrlResult is Result.Failure) {
-            return Result.Failure(imageDataUrlResult.error)
-        }
-        val imageDataUrl = imageDataUrlResult.value
-
-        val request = LLMRequest(
-            messages = listOf(
-                ChatMessage(
-                    role = "user",
-                    contentParts = listOf(
-                        ChatContentPart.Text(promptText),
-                        ChatContentPart.ImageDataUrl(imageDataUrl)
-                    )
-                )
-            )
-        )
+        val requestResult = buildImageRequest(promptText, image)
+        if (requestResult is Result.Failure) return Result.Failure(requestResult.error)
+        val request = requestResult.getOrThrow()
 
         val rawResponse = requestQueue.enqueue(request)
         return when (rawResponse) {
-            is Result.Success -> parser.parseAnalysisResponse(rawResponse.value)
+            is Result.Success -> parser.parseAnalysisResponse(rawResponse.getOrThrow())
             is Result.Failure -> Result.Failure(rawResponse.error)
         }
     }
@@ -67,11 +53,30 @@ class DefaultLLMService(
         profile: QualityProfile
     ): Result<EvaluationResult> {
         val promptText = prompts.candidateEvaluationPrompt(profile)
-        val imageDataUrlResult = encodeImageForLLM(image)
-        if (imageDataUrlResult is Result.Failure) {
-            return Result.Failure(imageDataUrlResult.error)
+        val requestResult = buildImageRequest(promptText, image)
+        if (requestResult is Result.Failure) return Result.Failure(requestResult.error)
+        val request = requestResult.getOrThrow()
+
+        val rawResponse = requestQueue.enqueue(request)
+        return when (rawResponse) {
+            is Result.Success -> parser.parseEvaluationResponse(rawResponse.getOrThrow(), image.path)
+            is Result.Failure -> Result.Failure(rawResponse.error)
         }
-        val imageDataUrl = imageDataUrlResult.value
+    }
+
+    private companion object {
+        // Upper bound to protect against accidentally huge images being sent to the LLM.
+        private const val MAX_LLM_IMAGE_BYTES: Long = 10L * 1024L * 1024L // 10 MB
+    }
+
+    /**
+     * Build a standard LLM request that includes the prompt and the image data URL.
+     * Returns Result.Failure if the image cannot be encoded for sending to the LLM.
+     */
+    private fun buildImageRequest(promptText: String, image: Image): Result<LLMRequest> {
+        val imageDataUrlResult = encodeImageForLLM(image)
+        if (imageDataUrlResult is Result.Failure) return Result.Failure(imageDataUrlResult.error)
+        val imageDataUrl = imageDataUrlResult.getOrThrow()
 
         val request = LLMRequest(
             messages = listOf(
@@ -85,16 +90,7 @@ class DefaultLLMService(
             )
         )
 
-        val rawResponse = requestQueue.enqueue(request)
-        return when (rawResponse) {
-            is Result.Success -> parser.parseEvaluationResponse(rawResponse.value, image.path)
-            is Result.Failure -> Result.Failure(rawResponse.error)
-        }
-    }
-
-    private companion object {
-        // Upper bound to protect against accidentally huge images being sent to the LLM.
-        private const val MAX_LLM_IMAGE_BYTES: Long = 10L * 1024L * 1024L // 10 MB
+        return Result.Success(request)
     }
 
     /**

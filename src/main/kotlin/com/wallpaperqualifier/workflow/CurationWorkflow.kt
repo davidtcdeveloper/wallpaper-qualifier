@@ -19,10 +19,12 @@ class CurationWorkflow(
 ) {
 
     data class CurationSummary(
+        val totalEvaluated: Int,
         val qualified: Int,
+        val rejected: Int,
         val copied: Int,
-        val skippedDuplicate: Int,
-        val failed: Int
+        val duplicates: Int,
+        val errors: Int
     )
 
     /**
@@ -39,24 +41,26 @@ class CurationWorkflow(
         confidenceThreshold: Float = 0.5f
     ): Result<CurationSummary> {
         logger.info("Starting curation to: $outputPath")
-        
+
         val outputDir = File(outputPath)
         if (!outputDir.exists() && !outputDir.mkdirs()) {
             return Result.Failure(FileIOException("Failed to create output directory: $outputPath"))
         }
 
         var copied = 0
-        var skippedDuplicate = 0
-        var failed = 0
-        
+        var duplicates = 0
+        var errors = 0
+
         val qualifiedResults = results.filter { it.qualified && it.confidenceScore >= confidenceThreshold }
+        val rejectedCount = results.size - qualifiedResults.size
+
         logger.info("Found ${qualifiedResults.size} qualified candidates (threshold: $confidenceThreshold)")
 
         qualifiedResults.forEach { result ->
             val sourceFile = File(result.imagePath)
             if (!sourceFile.exists()) {
                 logger.error("Source file for curation not found: ${result.imagePath}")
-                failed++
+                errors++
                 return@forEach
             }
 
@@ -67,15 +71,15 @@ class CurationWorkflow(
                 val isDuplicate = duplicateDetector.areIdentical(sourceFile.absolutePath, targetFile.absolutePath)
                 if (isDuplicate is Result.Success && isDuplicate.value) {
                     logger.info("Skipping duplicate: ${sourceFile.name}")
-                    skippedDuplicate++
+                    duplicates++
                     return@forEach
                 }
-                
+
                 // If not identical but filename exists, generate unique name
                 // For MVP, we'll just skip or overwrite if name conflicts but content is different
                 // Following Task 8: skip duplicate (default)
                 logger.warn("Filename conflict but not identical: ${sourceFile.name}. Skipping to be safe.")
-                skippedDuplicate++
+                duplicates++
                 return@forEach
             }
 
@@ -85,23 +89,24 @@ class CurationWorkflow(
                 copied++
                 logger.info("✓ Copied: ${sourceFile.name}")
             } else {
-                failed++
-                val error = outcome.error
+                errors++
+                val error = (outcome as Result.Failure).error
                 logger.error("✗ Failed to copy ${sourceFile.name}: ${error.message}")
             }
         }
 
         val summary = CurationSummary(
+            totalEvaluated = results.size,
             qualified = qualifiedResults.size,
+            rejected = rejectedCount,
             copied = copied,
-            skippedDuplicate = skippedDuplicate,
-            failed = failed
+            duplicates = duplicates,
+            errors = errors
         )
-        
-        logger.info("Curation complete: ${summary.copied} copied, ${summary.skippedDuplicate} skipped, ${summary.failed} failed.")
+
+        logger.info("Curation complete: ${summary.copied} copied, ${summary.duplicates} duplicates, ${summary.errors} errors.")
         return Result.Success(summary)
     }
-
     /**
      * Perform an atomic copy: write to a temporary file in the same filesystem, then move.
      */

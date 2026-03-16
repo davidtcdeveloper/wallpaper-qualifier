@@ -101,9 +101,9 @@ data class EvaluationResult(
 /**
  * Result type for error handling - either Success or Failure.
  */
-sealed class Result<T> {
-    data class Success<T>(val value: T) : Result<T>()
-    data class Failure<T>(val error: Throwable) : Result<T>()
+sealed class Result<out T> {
+    data class Success<out T>(val value: T) : Result<T>()
+    data class Failure(val error: Throwable) : Result<Nothing>()
 
     fun getOrNull(): T? = when (this) {
         is Success -> value
@@ -116,18 +116,8 @@ sealed class Result<T> {
     }
 
     inline fun <R> map(transform: (T) -> R): Result<R> = when (this) {
-        is Success -> Result.Success(transform(value))
-        is Failure -> Result.Failure(error)
-    }
-
-    inline fun onSuccess(action: (T) -> Unit): Result<T> {
-        if (this is Success) action(value)
-        return this
-    }
-
-    inline fun onFailure(action: (Throwable) -> Unit): Result<T> {
-        if (this is Failure) action(error)
-        return this
+        is Success -> Success(transform(value))
+        is Failure -> Failure(error)
     }
 }
 

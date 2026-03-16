@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class FileIOCoordinatorSpec : FunSpec({
 
@@ -57,6 +58,6 @@ class FileIOCoordinatorSpec : FunSpec({
             }
         }
 
-        result.shouldBeInstanceOf<Result.Failure<List<String>>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 })

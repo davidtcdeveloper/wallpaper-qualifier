@@ -44,7 +44,7 @@ class SampleAnalysisWorkflow(
         if (discoveryResult is Result.Failure) {
             return Result.Failure(discoveryResult.error)
         }
-        val images = discoveryResult.value
+        val images = discoveryResult.getOrThrow()
         logger.info("Discovered ${images.size} sample images")
 
         // 2. Process each image in parallel
@@ -58,7 +58,7 @@ class SampleAnalysisWorkflow(
             val targetFormat = if (converter.estimateTargetFormat(path) == ImageConverter.TargetFormat.JPEG) "jpg" else "png"
             val tempFileResult = tempFileManager.createTempFile(path, targetFormat)
             if (tempFileResult is Result.Failure) return@processBatch Result.Failure(tempFileResult.error)
-            val tempPath = tempFileResult.value
+            val tempPath = tempFileResult.getOrThrow()
 
             val conversionResult = converter.convertImage(path, tempPath)
             if (conversionResult is Result.Failure) {
@@ -84,7 +84,7 @@ class SampleAnalysisWorkflow(
 
         return when (analysisResults) {
             is Result.Success -> {
-                val characteristics = analysisResults.value
+                val characteristics = analysisResults.getOrThrow()
                 val profile = profileGenerator.aggregate(characteristics, resolutionRange)
                 logger.info("Successfully generated profile from ${characteristics.size} samples")
                 Result.Success(profile)

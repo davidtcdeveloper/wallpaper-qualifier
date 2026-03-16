@@ -13,10 +13,6 @@ class DuplicateDetector(
     private val digestFactory: () -> MessageDigest = { MessageDigest.getInstance("SHA-256") }
 ) {
 
-    companion object {
-        private const val BUFFER_SIZE = 8192
-    }
-
     private fun newDigest(): MessageDigest = digestFactory()
 
     /**
@@ -76,7 +72,7 @@ class DuplicateDetector(
             for (path in paths) {
                 when (val hashResult = computeFileHash(path)) {
                     is Result.Success -> {
-                        val hash = hashResult.value
+                        val hash = hashResult.getOrThrow()
                         hashToFiles.getOrPut(hash) { mutableListOf() }.add(path)
                     }
                     is Result.Failure -> {
@@ -110,8 +106,8 @@ class DuplicateDetector(
                 hash1Result is Result.Failure -> Result.Failure(hash1Result.error)
                 hash2Result is Result.Failure -> Result.Failure(hash2Result.error)
                 else -> {
-                    val hash1 = hash1Result.value
-                    val hash2 = hash2Result.value
+                    val hash1 = hash1Result.getOrThrow()
+                    val hash2 = hash2Result.getOrThrow()
                     Result.Success(hash1 == hash2)
                 }
             }
@@ -120,5 +116,9 @@ class DuplicateDetector(
                 ImageProcessingException("Failed to compare files - ${e.message}", e)
             )
         }
+    }
+
+    companion object {
+        private const val BUFFER_SIZE = 8192
     }
 }

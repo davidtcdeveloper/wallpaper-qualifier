@@ -118,14 +118,14 @@ class ImageLoaderProtoSpec : FunSpec({
         val corruptedFile = createCorruptedImage("corrupted.jpg")
 
         val failure = proto.loadImage(corruptedFile.absolutePath)
-            .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
+            .shouldBeInstanceOf<Result.Failure>()
 
         failure.error.shouldBeInstanceOf<ImageProcessingException>()
     }
 
     test("fails on nonexistent image") {
         val failure = proto.loadImage("/nonexistent/path/to/image.jpg")
-            .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
+            .shouldBeInstanceOf<Result.Failure>()
 
         failure.error.message.shouldContain("not found")
     }
@@ -135,7 +135,7 @@ class ImageLoaderProtoSpec : FunSpec({
         imageFile.setReadable(false)
 
         proto.loadImage(imageFile.absolutePath)
-            .shouldBeInstanceOf<Result.Failure<ImageMetadata>>()
+            .shouldBeInstanceOf<Result.Failure>()
 
         imageFile.setReadable(true)
     }

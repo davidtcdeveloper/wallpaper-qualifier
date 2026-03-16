@@ -2,16 +2,16 @@ package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.longs.shouldBeLessThanOrEqual
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class ProgressReporterSpec : FunSpec({
 
     test("reports percentage and eta updates") {
-        runBlocking {
+        runTest {
             val reporter = ProgressReporter(Logger())
             reporter.startPhase("eta-test", totalItems = 5)
             delay(5)
@@ -26,7 +26,7 @@ class ProgressReporterSpec : FunSpec({
     }
 
     test("reportBatch increments counts correctly") {
-        runBlocking {
+        runTest {
             val reporter = ProgressReporter(Logger())
             reporter.startPhase("batch-test", totalItems = 4)
 

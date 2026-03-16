@@ -24,7 +24,7 @@ import java.io.File
 class WorkflowOrchestrator(
     private val config: AppConfig,
     private val logger: Logger,
-    private val llmService: LLMService = createDefaultLLMService(config, logger)
+    llmService: LLMService = createDefaultLLMService(config, logger)
 ) {
 
     private val tempFileManager = TempFileManager(logger, config.folders.temp)
@@ -66,7 +66,7 @@ class WorkflowOrchestrator(
             } else {
                 val profileResult = sampleAnalysis.analyzeSamples(config.folders.samples)
                 if (profileResult is Result.Failure) return Result.Failure(profileResult.error)
-                val p = profileResult.value
+                val p = profileResult.getOrThrow()
                 profileStorage.save(p, profileFile)
                 p
             }
@@ -74,7 +74,7 @@ class WorkflowOrchestrator(
             // 3. Candidate Evaluation
             val evaluationResult = candidateEvaluation.evaluateCandidates(config.folders.candidates, profile)
             if (evaluationResult is Result.Failure) return Result.Failure(evaluationResult.error)
-            val results = evaluationResult.value
+            val results = evaluationResult.getOrThrow()
 
             // 4. Curation
             val curationResult = curation.curate(results, config.folders.output, config.processing.confidenceThreshold)

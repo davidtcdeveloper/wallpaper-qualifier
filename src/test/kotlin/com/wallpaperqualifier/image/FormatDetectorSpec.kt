@@ -68,7 +68,7 @@ class FormatDetectorSpec : FunSpec({
     test("fails on nonexistent file") {
         val result = detector.detectFormat("/nonexistent/path/image.jpg")
 
-        val failure = result.shouldBeInstanceOf<Result.Failure<ImageFormat>>()
+        val failure = result.shouldBeInstanceOf<Result.Failure>()
         failure.error.shouldBeInstanceOf<ImageProcessingException>()
         failure.error.message.shouldContain("not found")
     }
@@ -79,7 +79,7 @@ class FormatDetectorSpec : FunSpec({
 
         val result = detector.detectFormat(file.absolutePath)
 
-        result.shouldBeInstanceOf<Result.Failure<ImageFormat>>() // ensures failure
+        result.shouldBeInstanceOf<Result.Failure>() // ensures failure
     }
 
     test("validates existing image file") {
@@ -92,7 +92,7 @@ class FormatDetectorSpec : FunSpec({
     test("fails validation for nonexistent file") {
         val result = detector.isValidImageFile("/nonexistent/image.png")
 
-        result.shouldBeInstanceOf<Result.Failure<Unit>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 
     test("fails validation for empty file") {
@@ -101,7 +101,7 @@ class FormatDetectorSpec : FunSpec({
 
         val result = detector.isValidImageFile(file.absolutePath)
 
-        result.shouldBeInstanceOf<Result.Failure<Unit>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 
     test("lists supported extensions") {

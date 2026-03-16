@@ -96,7 +96,7 @@ class LLMInternalsSpec : FunSpec({
         val image = Image.create("/nonexistent.jpg", ImageFormat.JPEG, 100, 100, 0)
         val result = service.analyzeSampleImage(image)
         
-        result.shouldBeInstanceOf<Result.Failure<*>>()
+        result.shouldBeInstanceOf<Result.Failure>()
         result.error.message shouldBe "Image file for LLM does not exist: /nonexistent.jpg"
     }
 
@@ -113,7 +113,7 @@ class LLMInternalsSpec : FunSpec({
         val image = Image.create(tempFile.absolutePath, ImageFormat.JPEG, 100, 100, tempFile.length())
         val result = service.analyzeSampleImage(image)
         
-        result.shouldBeInstanceOf<Result.Failure<*>>()
+        result.shouldBeInstanceOf<Result.Failure>()
         result.error.message shouldStartWith "Image file for LLM is too large"
         
         tempFile.delete()

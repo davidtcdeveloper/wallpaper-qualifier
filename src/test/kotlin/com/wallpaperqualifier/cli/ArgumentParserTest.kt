@@ -66,7 +66,7 @@ class ArgumentParserTest : FunSpec({
             if (!tempFile.setReadable(false)) return@withTempConfigFile
 
             val result = parser.parse(arrayOf(tempFile.absolutePath))
-            result.shouldBeInstanceOf<Result.Failure<*>>()
+            result.shouldBeInstanceOf<Result.Failure>()
         }
     }
 
@@ -92,7 +92,7 @@ class ArgumentParserTest : FunSpec({
 })
 
 private fun Result<ParsedArgs>.failureMessageShouldContain(expected: String) {
-    val failure = this.shouldBeInstanceOf<Result.Failure<*>>()
+    val failure = this.shouldBeInstanceOf<Result.Failure>()
     failure.error.message.shouldNotBeNull().shouldContain(expected)
 }
 

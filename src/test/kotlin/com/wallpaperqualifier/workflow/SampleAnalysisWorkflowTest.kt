@@ -1,6 +1,7 @@
 package com.wallpaperqualifier.workflow
 
 import com.wallpaperqualifier.domain.ImageCharacteristics
+import com.wallpaperqualifier.domain.QualityProfile
 import com.wallpaperqualifier.domain.Result
 import com.wallpaperqualifier.image.FileIOCoordinator
 import com.wallpaperqualifier.image.ImageConverter
@@ -49,7 +50,7 @@ class SampleAnalysisWorkflowTest : FunSpec({
 
         val result = workflow.analyzeSamples(samplesDir.absolutePath)
 
-        result.shouldBeInstanceOf<Result.Success<*>>()
+        result.shouldBeInstanceOf<Result.Success<QualityProfile>>()
         val profile = result.value
         profile.sampleCount shouldBe 2
         // FakeLLMService returns 0.5f by default
@@ -59,6 +60,6 @@ class SampleAnalysisWorkflowTest : FunSpec({
     test("should return failure if no samples found") {
         val emptyDir = File(tempDir, "empty").apply { mkdirs() }
         val result = workflow.analyzeSamples(emptyDir.absolutePath)
-        result.shouldBeInstanceOf<Result.Failure<*>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 })

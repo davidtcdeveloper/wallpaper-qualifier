@@ -5,11 +5,7 @@ import com.wallpaperqualifier.config.FoldersConfig
 import com.wallpaperqualifier.config.LLMConfig
 import com.wallpaperqualifier.config.ProcessingConfig
 import com.wallpaperqualifier.domain.EvaluationResult
-import com.wallpaperqualifier.domain.Image
 import com.wallpaperqualifier.domain.ImageCharacteristics
-import com.wallpaperqualifier.domain.ImageFormat
-import com.wallpaperqualifier.domain.QualityProfile
-import com.wallpaperqualifier.domain.ResolutionRange
 import com.wallpaperqualifier.domain.Result
 import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
@@ -60,7 +56,7 @@ class LLMModuleSpec : FunSpec({
             """.trimIndent()
         )
 
-        result.shouldBeInstanceOf<Result.Failure<*>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 
     test("LLMResponseParser parses valid analysis response from OpenAI-style envelope") {

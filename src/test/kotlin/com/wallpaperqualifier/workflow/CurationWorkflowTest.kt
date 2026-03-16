@@ -53,6 +53,6 @@ class CurationWorkflowTest : FunSpec({
         result.shouldBeInstanceOf<Result.Success<CurationWorkflow.CurationSummary>>()
         val summary = result.value
         summary.copied shouldBe 0
-        summary.skippedDuplicate shouldBe 1
+        summary.duplicates shouldBe 1
     }
 })

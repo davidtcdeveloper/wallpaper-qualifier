@@ -45,7 +45,7 @@ class ImageLoader(
             walkDirectory(folder) { file ->
                 val imagePath = file.absolutePath
                 when (val result = loadImageFile(imagePath)) {
-                    is Result.Success -> images.add(result.value)
+                    is Result.Success -> images.add(result.getOrThrow())
                     is Result.Failure -> {
                         val errorMsg = "${file.name}: ${result.error.message}"
                         errors.add(errorMsg)
@@ -91,7 +91,7 @@ class ImageLoader(
             return Result.Failure(formatResult.error)
         }
 
-        val format = formatResult.value
+        val format = formatResult.getOrThrow()
 
         // Load metadata using ImageLoaderProto
         val metadataResult = proto.loadImage(imagePath)
@@ -99,7 +99,7 @@ class ImageLoader(
             return Result.Failure(metadataResult.error)
         }
 
-        val metadata = metadataResult.value
+        val metadata = metadataResult.getOrThrow()
         val file = File(imagePath)
 
         // Create Image object

@@ -41,7 +41,7 @@ class CandidateEvaluationWorkflow(
         if (discoveryResult is Result.Failure) {
             return Result.Failure(discoveryResult.error)
         }
-        val images = discoveryResult.value
+        val images = discoveryResult.getOrThrow()
         logger.info("Discovered ${images.size} candidate images")
 
         // 2. Process each image in parallel
@@ -55,7 +55,7 @@ class CandidateEvaluationWorkflow(
             val targetFormat = if (converter.estimateTargetFormat(path) == ImageConverter.TargetFormat.JPEG) "jpg" else "png"
             val tempFileResult = tempFileManager.createTempFile(path, targetFormat)
             if (tempFileResult is Result.Failure) return@processBatch Result.Failure(tempFileResult.error)
-            val tempPath = tempFileResult.value
+            val tempPath = tempFileResult.getOrThrow()
 
             val conversionResult = converter.convertImage(path, tempPath)
             if (conversionResult is Result.Failure) {
@@ -77,13 +77,13 @@ class CandidateEvaluationWorkflow(
             }
             
             // Re-map evaluation result path to original path for curation
-            evaluationResult.value.copy(imagePath = path).let { Result.Success(it) }
+            evaluationResult.getOrThrow().copy(imagePath = path).let { Result.Success(it) }
         }
 
         return when (evaluationResults) {
             is Result.Success -> {
-                logger.info("Successfully evaluated ${evaluationResults.value.size} candidates")
-                Result.Success(evaluationResults.value)
+                logger.info("Successfully evaluated ${evaluationResults.getOrThrow().size} candidates")
+                Result.Success(evaluationResults.getOrThrow())
             }
             is Result.Failure -> Result.Failure(evaluationResults.error)
         }

@@ -72,7 +72,7 @@ class ConfigParserTest : FunSpec({
     test("invalid json returns configuration exception") {
         val result = ConfigParser().parseJson("{ invalid json }")
 
-        val failure = result.shouldBeInstanceOf<Result.Failure<*>>()
+        val failure = result.shouldBeInstanceOf<Result.Failure>()
         failure.error.shouldBeInstanceOf<ConfigurationException>()
     }
 
@@ -182,7 +182,7 @@ class ConfigParserTest : FunSpec({
 })
 
 private fun Result<*>.failureMessageShouldContain(expected: String) {
-    val failure = this.shouldBeInstanceOf<Result.Failure<*>>()
+    val failure = this.shouldBeInstanceOf<Result.Failure>()
     failure.error.message.shouldNotBeNull().shouldContain(expected)
 }
 

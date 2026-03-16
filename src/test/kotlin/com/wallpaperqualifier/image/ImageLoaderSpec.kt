@@ -40,7 +40,7 @@ class ImageLoaderSpec : FunSpec({
     test("fails when folder does not exist") {
         val result = loader.discoverImages("/nonexistent/path")
 
-        result.shouldBeInstanceOf<Result.Failure<List<com.wallpaperqualifier.domain.Image>>>()
+        result.shouldBeInstanceOf<Result.Failure>()
     }
 
     test("discovered image metadata includes dimensions and file size") {
