@@ -5,14 +5,13 @@ import com.wallpaperqualifier.config.FoldersConfig
 import com.wallpaperqualifier.config.LLMConfig
 import com.wallpaperqualifier.config.ProcessingConfig
 import com.wallpaperqualifier.domain.EvaluationResult
-import com.wallpaperqualifier.domain.ImageCharacteristics
 import com.wallpaperqualifier.domain.Result
 import com.wallpaperqualifier.llm.FakeLLMService
+import com.wallpaperqualifier.test.TestTempManager
 import com.wallpaperqualifier.utils.Logger
 import com.wallpaperqualifier.workflow.WorkflowOrchestrator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.File
 import java.nio.file.Files
@@ -37,8 +36,7 @@ class EndToEndTest : FunSpec({
     }
 
     fun copyResourceImage(resourcePath: String, destFile: File) {
-        val resourceStream = File("src/test/resources/images/$resourcePath").inputStream()
-        destFile.outputStream().use { resourceStream.copyTo(it) }
+        TestTempManager.copyResourceImage(resourcePath, destFile)
     }
 
     test("Scenario 1: Full Happy Path - analyze samples, generate profile, evaluate candidates, curate") {
@@ -136,5 +134,6 @@ class EndToEndTest : FunSpec({
 
     afterProject {
         testBaseDir.deleteRecursively()
+        TestTempManager.cleanup()
     }
 })

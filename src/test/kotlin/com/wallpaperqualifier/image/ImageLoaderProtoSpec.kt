@@ -2,6 +2,7 @@ package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.ImageProcessingException
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.test.TestTempManager
 import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -11,34 +12,19 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
 
 class ImageLoaderProtoSpec : FunSpec({
 
-    val testDir = File("src/test/resources/images").apply { mkdirs() }
     val proto = ImageLoaderProto(Logger())
 
     fun createTestImage(filename: String, width: Int, height: Int, format: String): File {
-        val file = File(testDir, filename)
-        val bufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val rgb = ((x * 255) / width) shl 16 or ((y * 255) / height)
-                bufferedImage.setRGB(x, y, rgb)
-            }
-        }
-
-        ImageIO.write(bufferedImage, format, file)
+        val file = TestTempManager.createTestImage(filename, format, width, height)
         return file
     }
 
     fun createCorruptedImage(filename: String): File {
-        val file = File(testDir, filename)
-        file.writeBytes(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()) + "This is not valid JPEG data".toByteArray())
-        return file
+        return TestTempManager.createCorruptedImage(filename)
     }
 
     test("loads JPEG image metadata") {
@@ -182,5 +168,10 @@ class ImageLoaderProtoSpec : FunSpec({
             .value
 
         metadata.filename shouldBe "test-filename.jpg"
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })

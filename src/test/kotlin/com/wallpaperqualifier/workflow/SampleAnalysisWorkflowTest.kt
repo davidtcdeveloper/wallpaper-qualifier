@@ -1,22 +1,17 @@
 package com.wallpaperqualifier.workflow
 
-import com.wallpaperqualifier.domain.ImageCharacteristics
 import com.wallpaperqualifier.domain.QualityProfile
 import com.wallpaperqualifier.domain.Result
-import com.wallpaperqualifier.image.FileIOCoordinator
-import com.wallpaperqualifier.image.ImageConverter
-import com.wallpaperqualifier.image.ImageLoader
-import com.wallpaperqualifier.image.ImageLoaderProto
-import com.wallpaperqualifier.image.TempFileManager
+import com.wallpaperqualifier.image.*
 import com.wallpaperqualifier.llm.FakeLLMService
 import com.wallpaperqualifier.profile.ProfileGenerator
+import com.wallpaperqualifier.test.TestTempManager
 import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.File
-import java.nio.file.Files
 
 class SampleAnalysisWorkflowTest : FunSpec({
 
@@ -37,8 +32,7 @@ class SampleAnalysisWorkflowTest : FunSpec({
     )
 
     fun copyResourceImage(name: String, target: File) {
-        val resource = File("src/test/resources/images/$name")
-        Files.copy(resource.toPath(), target.toPath())
+        TestTempManager.copyResourceImage(name, target)
     }
 
     test("should analyze samples and generate profile") {
@@ -61,5 +55,10 @@ class SampleAnalysisWorkflowTest : FunSpec({
         val emptyDir = File(tempDir, "empty").apply { mkdirs() }
         val result = workflow.analyzeSamples(emptyDir.absolutePath)
         result.shouldBeInstanceOf<Result.Failure>()
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })

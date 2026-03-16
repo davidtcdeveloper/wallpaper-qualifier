@@ -1,6 +1,7 @@
 package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.test.TestTempManager
 import com.wallpaperqualifier.utils.Logger
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -15,14 +16,19 @@ class ImageLoaderSpec : FunSpec({
 
     val logger = Logger()
     val loader = ImageLoader(logger, ImageLoaderProto(logger))
-    val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val testDir = TestTempManager.baseDir
 
     fun createTestImage(filename: String, width: Int = 100, height: Int = 100, directory: File = testDir): File {
-        directory.mkdirs()
-        val file = File(directory, filename)
-        val bufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-        ImageIO.write(bufferedImage, "PNG", file)
-        return file
+        // If a custom directory is provided, create the file within that directory
+        if (directory != testDir) {
+            directory.mkdirs()
+            val file = File(directory, filename)
+            val bufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+            ImageIO.write(bufferedImage, "PNG", file)
+            TestTempManager.registerForCleanup(file)
+            return file
+        }
+        return TestTempManager.createTestImage(filename, "PNG", width, height)
     }
 
     test("discovers images in existing folder") {
@@ -53,5 +59,10 @@ class ImageLoaderSpec : FunSpec({
         image.width shouldBe 800
         image.height shouldBe 600
         image.fileSize.shouldBeGreaterThan(0L)
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })

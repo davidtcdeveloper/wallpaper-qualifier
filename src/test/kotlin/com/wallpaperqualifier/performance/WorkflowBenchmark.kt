@@ -5,14 +5,13 @@ import com.wallpaperqualifier.config.FoldersConfig
 import com.wallpaperqualifier.config.LLMConfig
 import com.wallpaperqualifier.config.ProcessingConfig
 import com.wallpaperqualifier.llm.FakeLLMService
+import com.wallpaperqualifier.test.TestTempManager
 import com.wallpaperqualifier.utils.Logger
 import com.wallpaperqualifier.workflow.WorkflowOrchestrator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.longs.shouldBeLessThan
-import io.kotest.matchers.shouldBe
 import java.io.File
 import java.nio.file.Files
-import kotlin.system.measureTimeMillis
 
 class WorkflowBenchmark : FunSpec({
     val logger = Logger()
@@ -32,8 +31,7 @@ class WorkflowBenchmark : FunSpec({
     )
 
     fun copyResourceImage(resourcePath: String, destFile: File) {
-        val resourceStream = File("src/test/resources/images/$resourcePath").inputStream()
-        destFile.outputStream().use { resourceStream.copyTo(it) }
+        TestTempManager.copyResourceImage(resourcePath, destFile)
     }
 
     test("Benchmark full workflow with 10 samples and 20 candidates") {
@@ -67,5 +65,6 @@ class WorkflowBenchmark : FunSpec({
 
     afterProject {
         testBaseDir.deleteRecursively()
+        TestTempManager.cleanup()
     }
 })

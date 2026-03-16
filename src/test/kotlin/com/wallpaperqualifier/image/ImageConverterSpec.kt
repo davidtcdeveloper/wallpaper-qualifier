@@ -1,13 +1,12 @@
 package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.test.TestTempManager
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.longs.shouldBeGreaterThan
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
 
 class ImageConverterSpec : FunSpec({
 
@@ -15,11 +14,7 @@ class ImageConverterSpec : FunSpec({
     val converter = ImageConverter()
 
     fun createTestImage(filename: String, format: String = "PNG", width: Int = 128, height: Int = 128): File {
-        val file = File(testDir, filename)
-        file.parentFile?.mkdirs()
-        val bufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-        ImageIO.write(bufferedImage, format, file)
-        return file
+        return TestTempManager.createTestImage(filename, format, width, height)
     }
 
     test("converts PNG to JPEG successfully") {
@@ -81,5 +76,10 @@ class ImageConverterSpec : FunSpec({
         } finally {
             target.delete()
         }
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })

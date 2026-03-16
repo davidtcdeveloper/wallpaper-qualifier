@@ -3,26 +3,21 @@ package com.wallpaperqualifier.image
 import com.wallpaperqualifier.domain.ImageFormat
 import com.wallpaperqualifier.domain.ImageProcessingException
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.test.TestTempManager
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.shouldBe
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
 
 class FormatDetectorSpec : FunSpec({
 
-    val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val testDir = TestTempManager.baseDir
     val detector = FormatDetector()
 
     fun createTestImage(filename: String, format: String): File {
-        val file = File(testDir, filename)
-        val bufferedImage = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB)
-        ImageIO.write(bufferedImage, format, file)
-        return file
+        return TestTempManager.createTestImage(filename, format, 100, 100)
     }
 
     test("detects JPEG format via magic bytes") {
@@ -108,5 +103,10 @@ class FormatDetectorSpec : FunSpec({
         val extensions = detector.getSupportedExtensions()
 
         extensions.shouldContainAll(listOf("jpg", "jpeg", "png", "gif", "bmp", "webp"))
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })

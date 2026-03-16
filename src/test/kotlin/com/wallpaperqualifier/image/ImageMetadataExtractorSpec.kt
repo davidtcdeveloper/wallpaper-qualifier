@@ -1,27 +1,22 @@
 package com.wallpaperqualifier.image
 
 import com.wallpaperqualifier.domain.Result
+import com.wallpaperqualifier.test.TestTempManager
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.floats.shouldBeGreaterThan
 import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
 
 class ImageMetadataExtractorSpec : FunSpec({
 
-    val testDir = File("src/test/resources/images").apply { mkdirs() }
+    val testDir = TestTempManager.baseDir
     val extractor = ImageMetadataExtractor()
 
     fun createTestImage(filename: String, width: Int = 1920, height: Int = 1080): File {
-        val file = File(testDir, filename)
-        val bufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-        ImageIO.write(bufferedImage, "PNG", file)
-        return file
+        return TestTempManager.createTestImage(filename, "PNG", width, height)
     }
 
     test("extracts metadata for valid image") {
@@ -73,5 +68,10 @@ class ImageMetadataExtractorSpec : FunSpec({
             .value
 
         metadata.shouldHaveSize(2)
+    }
+
+
+    afterProject {
+        TestTempManager.cleanup()
     }
 })
