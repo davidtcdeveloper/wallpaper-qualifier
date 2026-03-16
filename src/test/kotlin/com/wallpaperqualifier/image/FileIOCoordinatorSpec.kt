@@ -7,8 +7,6 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
 
 class FileIOCoordinatorSpec : FunSpec({
 
@@ -17,11 +15,9 @@ class FileIOCoordinatorSpec : FunSpec({
         val coordinator = FileIOCoordinator(logger, maxThreads = 2, batchSize = 2)
         val paths = listOf("alpha", "beta", "gamma")
 
-        val result = runBlocking {
-            coordinator.processBatch<Int>(paths, phase = "parallel-test") { path ->
-                delay(5)
-                Result.Success(path.length)
-            }
+        val result = coordinator.processBatch<Int>(paths, phase = "parallel-test") { path ->
+            delay(5)
+            Result.Success(path.length)
         }
 
         val success = result.shouldBeInstanceOf<Result.Success<List<Int>>>()
@@ -33,13 +29,11 @@ class FileIOCoordinatorSpec : FunSpec({
         val coordinator = FileIOCoordinator(logger, maxThreads = 2, batchSize = 2)
         val paths = listOf("keep", "drop")
 
-        val result = runBlocking {
-            coordinator.processBatch<String>(paths, phase = "partial-failure") { path ->
-                if (path == "drop") {
-                    Result.Failure(Exception("simulated error"))
-                } else {
-                    Result.Success(path)
-                }
+        val result = coordinator.processBatch<String>(paths, phase = "partial-failure") { path ->
+            if (path == "drop") {
+                Result.Failure(Exception("simulated error"))
+            } else {
+                Result.Success(path)
             }
         }
 
@@ -52,10 +46,8 @@ class FileIOCoordinatorSpec : FunSpec({
         val coordinator = FileIOCoordinator(logger, maxThreads = 2, batchSize = 2)
         val paths = listOf("one", "two")
 
-        val result = runBlocking {
-            coordinator.processBatch<String>(paths, phase = "all-fail") { _ ->
-                Result.Failure(Exception("boom"))
-            }
+        val result = coordinator.processBatch<String>(paths, phase = "all-fail") { _ ->
+            Result.Failure(Exception("boom"))
         }
 
         result.shouldBeInstanceOf<Result.Failure>()
